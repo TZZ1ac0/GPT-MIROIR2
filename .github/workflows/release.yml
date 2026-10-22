@@ -5,10 +5,6 @@ on:
     branches: [main]
     paths:
       - 'gradle.properties'
-      - 'CHANGELOG.md'
-      - 'app/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
       - '.github/workflows/release.yml'
   workflow_dispatch:
 
@@ -57,25 +53,28 @@ jobs:
         shell: bash
         run: |
           TAG="refs/tags/${{ steps.version.outputs.tag }}"
+          echo "already_released=false" >> "$GITHUB_OUTPUT"
           if git rev-parse "$TAG^{commit}" >/dev/null 2>&1; then
             TAG_COMMIT="$(git rev-parse "$TAG^{commit}")"
             if [[ "$TAG_COMMIT" != "$GITHUB_SHA" ]]; then
-              echo "::error::Version ${{ steps.version.outputs.tag }} is already assigned to another commit. Bump VERSION_NAME in gradle.properties before publishing a new release."
-              exit 1
+              echo "already_released=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::Version ${{ steps.version.outputs.tag }} already belongs to another commit; skipping publication. Bump VERSION_NAME in gradle.properties to publish a new release."
+            else
+              echo "exists=true" >> "$GITHUB_OUTPUT"
+              echo "The tag points to this exact commit; continuing to allow a safe workflow retry."
             fi
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "The tag points to this exact commit; continuing to allow a safe workflow retry."
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Create tag
-        if: steps.tag.outputs.exists == 'false'
+        if: steps.tag.outputs.exists == 'false' && steps.tag.outputs.already_released != 'true'
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
           git push origin "${{ steps.version.outputs.tag }}"
       - name: Create GitHub Release if needed
+        if: steps.tag.outputs.already_released != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -83,6 +82,7 @@ jobs:
             gh release create "${{ steps.version.outputs.tag }}" --title "${{ steps.version.outputs.tag }}" --notes-file CHANGELOG.md
           fi
       - name: Attach installable APK to GitHub Release
+        if: steps.tag.outputs.already_released != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
