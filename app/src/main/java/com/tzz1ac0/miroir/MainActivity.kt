@@ -37,7 +37,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -115,7 +114,7 @@ private fun CameraScreen(activity: ComponentActivity) {
         ) {
             if (hasCameraPermission) {
                 Button(onClick = { useRootEncoder = !useRootEncoder }) {
-                    Text(if (useRootEncoder) "Revenir à l’aperçu CameraX validé" else "Tester l’aperçu RootEncoder (diagnostic)")
+                    Text(if (useRootEncoder) "Aperçu caméra" else "Aperçu expérimental")
                 }
                 if (useRootEncoder) {
                     RootEncoderCameraPreview(activity = activity, modifier = Modifier.weight(1f))
@@ -142,14 +141,8 @@ private fun CameraXCameraPreview(activity: ComponentActivity, modifier: Modifier
         }
     }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
-    var frameCount by remember { mutableIntStateOf(0) }
-    var cameraStatus by remember { mutableStateOf("Initialisation de la caméra…") }
-
     Column(modifier = modifier.fillMaxWidth()) {
         AndroidView(factory = { previewView }, modifier = Modifier.weight(1f).fillMaxWidth())
-        Text(cameraStatus)
-        Text("Images reçues : $frameCount")
-        Text("Mode de référence : CameraX PreviewView, exposition automatique demandée.")
     }
 
     DisposableEffect(activity, previewView) {
@@ -173,26 +166,13 @@ private fun CameraXCameraPreview(activity: ComponentActivity, modifier: Modifier
                     android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE_ON
                 )
                 val analysis = analysisBuilder.build()
-                var count = 0
                 analysis.setAnalyzer(analysisExecutor) { image ->
-                    count++
-                    if (count % 15 == 0) {
-                        val snapshot = count
-                        activity.runOnUiThread {
-                            if (!disposed) {
-                                frameCount = snapshot
-                                cameraStatus = "Caméra active"
-                            }
-                        }
-                    }
                     image.close()
                 }
                 provider?.unbindAll()
                 provider?.bindToLifecycle(activity, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis)
-                cameraStatus = "Caméra avant active — exposition automatique demandée"
                 Log.i(TAG, "baseline_bound=true aeMode=ON")
             } catch (error: Exception) {
-                cameraStatus = "Échec de démarrage : ${error.localizedMessage ?: "erreur caméra"}"
                 Log.e(TAG, "baseline_start_failed", error)
             }
         }, ContextCompat.getMainExecutor(activity))
@@ -344,9 +324,6 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
                 modifier = Modifier.weight(1f).fillMaxWidth()
             )
         }
-        Text(status)
-        Text("Diagnostic uniquement : aucune diffusion RTSP n’est démarrée. Consulte logcat avec le filtre MiroirCameraDiag.")
-        Text("Source active : ${source.isRunning()} ; aperçu RootEncoder : ${stream.isOnPreview}")
     }
 }
 
