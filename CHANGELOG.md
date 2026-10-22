@@ -4,6 +4,8 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 
 ## [Non publié]
 
+## [0.2.3] - 2026-10-22
+
 ### Ajouté
 - Interface : barre de titre contrastée, y compris l’icône d’accès au menu.
 - Paramètres : affiche séparément la résolution réelle du flux vidéo et les dimensions en pixels de la zone d’image affichée.
