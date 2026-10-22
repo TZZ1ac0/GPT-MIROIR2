@@ -78,8 +78,6 @@ class AutoExposureCameraXSource(
   private var surfaceReleased = CountDownLatch(0)
   private var imageAnalysis: ImageAnalysis? = null
   private var analysisExecutor: ExecutorService? = null
-  @Volatile private var analysisFrameCount = 0L
-  @Volatile private var captureResultCount = 0L
 
   override val lifecycle: Lifecycle
     get() = lifecycleRegistry
@@ -95,7 +93,6 @@ class AutoExposureCameraXSource(
     Camera2Interop.Extender(previewBuilder)
       .setCaptureRequestOption(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
       .setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_ON)
-)
     // Do not pin the sensor to the encoder's nominal FPS. A fixed 30 fps
     // range caps exposure near one frame (the logs showed ~30 ms), which can
     // leave the image dark in low light even while AE reports CONVERGED.
@@ -148,7 +145,6 @@ class AutoExposureCameraXSource(
       .setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_ON)
     val analysis = analysisBuilder.build()
     val analyzerExecutor = Executors.newSingleThreadExecutor()
-    analysisFrameCount = 0L
     analysis.setAnalyzer(analyzerExecutor) { image ->
       image.close()
     }
