@@ -5,6 +5,7 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ## [Non publié]
 
 ### Modifié
+- Retire les textes de diagnostic de la zone d’aperçu caméra pour laisser l’image visible sans annotations.
 - Barre supérieure : titre « Miroir » et menu à trois points verticaux avec l’action « Quitter ».
 
 ## [0.2.0] - 2026-10-14
