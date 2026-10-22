@@ -5,6 +5,9 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ## [Non publié]
 
 ### Modifié
+- Logcat : suppression de tous les appels de journalisation de l’application, y compris les messages `MiroirCameraDiag`.
+
+### Modifié
 - Barre supérieure : titre « Miroir » et menu à trois points verticaux avec l’action « Quitter ».
 
 ## [0.2.0] - 2026-10-14

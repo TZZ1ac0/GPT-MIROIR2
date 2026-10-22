@@ -17,14 +17,10 @@
 package com.tzz1ac0.miroir.camera
 
 import android.content.Context
-import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
-import android.hardware.camera2.CaptureResult
-import android.hardware.camera2.TotalCaptureResult
 import android.graphics.SurfaceTexture
 import android.util.Range
-import android.util.Log
 import android.util.Size
 import android.view.MotionEvent
 import android.view.Surface
@@ -60,8 +56,6 @@ import java.util.concurrent.TimeUnit
 /**
  * Created by pedro on 16/2/24.
  */
-private const val CAMERA_SOURCE_TAG = "MiroirCameraDiag"
-
 class AutoExposureCameraXSource(
   private val context: Context,
 ): VideoSource(), LifecycleOwner {
@@ -84,15 +78,12 @@ class AutoExposureCameraXSource(
   private var surfaceReleased = CountDownLatch(0)
   private var imageAnalysis: ImageAnalysis? = null
   private var analysisExecutor: ExecutorService? = null
-  @Volatile private var analysisFrameCount = 0L
-  @Volatile private var captureResultCount = 0L
 
   override val lifecycle: Lifecycle
     get() = lifecycleRegistry
 
   @OptIn(ExperimentalCamera2Interop::class)
   override fun create(width: Int, height: Int, fps: Int, rotation: Int): Boolean {
-    Log.i(CAMERA_SOURCE_TAG, "source_create width=$width height=$height aspect=${"%.4f".format(width.toFloat() / height.coerceAtLeast(1))} fps=$fps rotation=$rotation")
     val facing = if (facing == CameraSelector.LENS_FACING_BACK) CameraHelper.Facing.BACK else CameraHelper.Facing.FRONT
     val optimalResolution = requiredSize ?: getOptimalResolution(Size(width, height), getCameraResolutions(facing).toTypedArray())
     // Preserve the explicit AE configuration used by the original app implementation.
@@ -102,39 +93,6 @@ class AutoExposureCameraXSource(
     Camera2Interop.Extender(previewBuilder)
       .setCaptureRequestOption(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
       .setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_ON)
-      .setSessionCaptureCallback(object : CameraCaptureSession.CaptureCallback() {
-        override fun onCaptureCompleted(
-          session: CameraCaptureSession,
-          request: CaptureRequest,
-          result: TotalCaptureResult
-        ) {
-          val count = ++captureResultCount
-          if (count <= 5L || count % 30L == 0L) {
-            val controlMode = result.get(CaptureResult.CONTROL_MODE)
-            val aeMode = result.get(CaptureResult.CONTROL_AE_MODE)
-            val aeState = result.get(CaptureResult.CONTROL_AE_STATE)
-            val exposureTimeNs = result.get(CaptureResult.SENSOR_EXPOSURE_TIME)
-            val sensitivityIso = result.get(CaptureResult.SENSOR_SENSITIVITY)
-            val frameDurationNs = result.get(CaptureResult.SENSOR_FRAME_DURATION)
-            val aeStateText = aeState?.let { aeStateName(it) } ?: "null"
-            Log.i(
-              CAMERA_SOURCE_TAG,
-              "camera2_capture count=$count controlMode=$controlMode aeMode=$aeMode " +
-                "aeState=$aeStateText " +
-                "exposureTimeNs=$exposureTimeNs sensitivityIso=$sensitivityIso " +
-                "frameDurationNs=$frameDurationNs requestAeMode=${request.get(CaptureRequest.CONTROL_AE_MODE)}"
-            )
-          }
-        }
-
-        override fun onCaptureFailed(
-          session: CameraCaptureSession,
-          request: CaptureRequest,
-          failure: android.hardware.camera2.CaptureFailure
-        ) {
-          Log.w(CAMERA_SOURCE_TAG, "camera2_capture_failed reason=${failure.reason} frame=${failure.frameNumber}")
-        }
-      })
     // Do not pin the sensor to the encoder's nominal FPS. A fixed 30 fps
     // range caps exposure near one frame (the logs showed ~30 ms), which can
     // leave the image dark in low light even while AE reports CONVERGED.
@@ -152,29 +110,24 @@ class AutoExposureCameraXSource(
       ).build()
 
     lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-    Log.i(CAMERA_SOURCE_TAG, "source_create_done requested=${width}x${height} requestedAspect=${"%.4f".format(width.toFloat() / height.coerceAtLeast(1))} selected=${optimalResolution.width}x${optimalResolution.height} selectedAspect=${"%.4f".format(optimalResolution.width.toFloat() / optimalResolution.height.coerceAtLeast(1))}")
     return true
   }
 
   override fun start(surfaceTexture: SurfaceTexture) {
-    Log.i(CAMERA_SOURCE_TAG, "source_start alreadyRunning=${isRunning()} texture=${surfaceTexture.hashCode()} glThread=${Thread.currentThread().name}")
     this.surfaceTexture = surfaceTexture
     if (isRunning()) return
     val facing = if (facing == CameraSelector.LENS_FACING_BACK) CameraHelper.Facing.BACK else CameraHelper.Facing.FRONT
     val optimalResolution = requiredSize ?: getOptimalResolution(Size(width, height), getCameraResolutions(facing).toTypedArray())
     surfaceTexture.setDefaultBufferSize(optimalResolution.width, optimalResolution.height)
-    Log.i(CAMERA_SOURCE_TAG, "surface_texture_buffer_size=${optimalResolution.width}x${optimalResolution.height} bufferAspect=${"%.4f".format(optimalResolution.width.toFloat() / optimalResolution.height.coerceAtLeast(1))} rootEncoderInput=${width}x${height} inputAspect=${"%.4f".format(width.toFloat() / height.coerceAtLeast(1))}")
     lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
     val cameraSelector = cameraSelectorBuilder
       .requireLensFacing(this.facing)
       .build()
 
     preview.setSurfaceProvider { request ->
-      Log.i(CAMERA_SOURCE_TAG, "surface_request resolution=${request.resolution.width}x${request.resolution.height} aspect=${"%.4f".format(request.resolution.width.toFloat() / request.resolution.height.coerceAtLeast(1))} buffer=${optimalResolution.width}x${optimalResolution.height} thread=${Thread.currentThread().name}")
       val surface = Surface(surfaceTexture)
       val executor = Executors.newSingleThreadExecutor()
       request.provideSurface(surface, executor) { result ->
-        Log.i(CAMERA_SOURCE_TAG, "surface_result=${result.resultCode}")
         surface.release()
         executor.shutdown()
         surfaceReleased.countDown()
@@ -192,84 +145,19 @@ class AutoExposureCameraXSource(
       .setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_ON)
     val analysis = analysisBuilder.build()
     val analyzerExecutor = Executors.newSingleThreadExecutor()
-    analysisFrameCount = 0L
     analysis.setAnalyzer(analyzerExecutor) { image ->
-      val count = ++analysisFrameCount
-      if (count <= 5L || count % 30L == 0L) {
-        // Sample the Y plane directly: this verifies actual camera pixels, not only frame delivery.
-        var samples = 0
-        var sumY = 0L
-        var minY = 255
-        var maxY = 0
-        var rawHead = "unavailable"
-        var bufferPosition = -1
-        var bufferLimit = -1
-        var rowStride = -1
-        var pixelStride = -1
-        val plane = image.planes.firstOrNull()
-        if (plane != null) {
-          val buffer = plane.buffer
-          bufferPosition = buffer.position()
-          bufferLimit = buffer.limit()
-          rowStride = plane.rowStride
-          pixelStride = plane.pixelStride
-          val headCount = minOf(12, buffer.remaining())
-          rawHead = (0 until headCount).joinToString(",") { offset ->
-            (buffer.get(bufferPosition + offset).toInt() and 0xff).toString()
-          }
-          val stepX = (image.width / 32).coerceAtLeast(1)
-          val stepY = (image.height / 24).coerceAtLeast(1)
-          var y = 0
-          while (y < image.height) {
-            var x = 0
-            while (x < image.width) {
-              val index = bufferPosition + y * rowStride + x * pixelStride
-              if (index >= bufferPosition && index < bufferLimit) {
-                val value = buffer.get(index).toInt() and 0xff
-                sumY += value
-                minY = minOf(minY, value)
-                maxY = maxOf(maxY, value)
-                samples++
-              }
-              x += stepX
-            }
-            y += stepY
-          }
-        }
-        val meanY = if (samples > 0) sumY / samples else -1
-        Log.i(
-          CAMERA_SOURCE_TAG,
-          "image_analysis_frame count=$count size=${image.width}x${image.height} aspect=${"%.4f".format(image.width.toFloat() / image.height.coerceAtLeast(1))} rotationDegrees=${image.imageInfo.rotationDegrees} format=${image.format} " +
-            "ySamples=$samples meanY=$meanY minY=$minY maxY=$maxY " +
-            "yPosition=$bufferPosition yLimit=$bufferLimit rowStride=$rowStride pixelStride=$pixelStride rawHead=$rawHead"
-        )
-      }
       image.close()
     }
     imageAnalysis = analysis
     analysisExecutor = analyzerExecutor
     camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, analysis)
-    Log.i(CAMERA_SOURCE_TAG, "camera_bound running=${isRunning()} aeMode=ON analysis=true")
-    camera?.cameraInfo?.cameraState?.observe(this) { state ->
-      Log.i(CAMERA_SOURCE_TAG, "camera_state=${state.type} error=${state.error?.code}")
-    }
-    camera?.cameraInfo?.exposureState?.let { ae ->
-      Log.i(CAMERA_SOURCE_TAG, "ae_state supported=${ae.isExposureCompensationSupported} range=${ae.exposureCompensationRange} index=${ae.exposureCompensationIndex}")
-    }
+
+
   }
 
-  private fun aeStateName(state: Int): String = when (state) {
-    CaptureResult.CONTROL_AE_STATE_INACTIVE -> "INACTIVE"
-    CaptureResult.CONTROL_AE_STATE_SEARCHING -> "SEARCHING"
-    CaptureResult.CONTROL_AE_STATE_CONVERGED -> "CONVERGED"
-    CaptureResult.CONTROL_AE_STATE_LOCKED -> "LOCKED"
-    CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED -> "FLASH_REQUIRED"
-    CaptureResult.CONTROL_AE_STATE_PRECAPTURE -> "PRECAPTURE"
-    else -> "UNKNOWN($state)"
-  }
+
 
   override fun stop() {
-    Log.i(CAMERA_SOURCE_TAG, "source_stop running=${isRunning()} analysisFrames=$analysisFrameCount")
     val wasRunning = isRunning()
     surfaceReleased = CountDownLatch(1)
     lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
@@ -287,11 +175,9 @@ class AutoExposureCameraXSource(
     surface = null
     executor?.shutdown()
     executor = null
-    Log.i(CAMERA_SOURCE_TAG, "source_stop_done")
   }
 
   override fun release() {
-    Log.i(CAMERA_SOURCE_TAG, "source_release running=${isRunning()}")
     lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
   }
 
