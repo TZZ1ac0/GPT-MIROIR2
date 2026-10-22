@@ -3,7 +3,6 @@ package com.tzz1ac0.miroir
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.activity.ComponentActivity
@@ -52,7 +51,6 @@ import com.pedro.library.view.RenderErrorCallback
 import com.tzz1ac0.miroir.camera.AutoExposureCameraXSource
 import java.util.concurrent.Executors
 
-private const val TAG = "MiroirCameraDiag"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -189,7 +187,6 @@ private fun CameraXCameraPreview(activity: ComponentActivity, modifier: Modifier
                 cameraStatus = "Caméra avant active — exposition automatique demandée"
             } catch (error: Exception) {
                 cameraStatus = "Échec de démarrage : ${error.localizedMessage ?: "erreur caméra"}"
-                Log.e(TAG, "baseline_start_failed", error)
             }
         }, ContextCompat.getMainExecutor(activity))
         onDispose {
@@ -212,9 +209,9 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
             object : ConnectChecker {
                 override fun onConnectionStarted(url: String) {}
                 override fun onConnectionSuccess() {}
-                override fun onConnectionFailed(reason: String) { Log.e(TAG, "rtsp_connection_failed=$reason") }
+                override fun onConnectionFailed(reason: String) {}
                 override fun onDisconnect() {}
-                override fun onAuthError() { Log.e(TAG, "rtsp_auth_error") }
+                override fun onAuthError() {}
                 override fun onAuthSuccess() {}
                 override fun onStreamingStats(report: com.pedro.common.StreamingStatsReport) {}
             },
@@ -226,7 +223,6 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
         try {
             stream.getGlInterface().setRenderErrorCallback(object : RenderErrorCallback {
                 override fun onRenderError(error: RuntimeException) {
-                    Log.e(TAG, "rootencoder_gl_render_error=${error.message}", error)
                 }
             })
             stream.getGlInterface().autoHandleOrientation = true
@@ -235,7 +231,6 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
         } catch (error: Exception) {
             prepared = false
             status = "Échec prepareVideo : ${error.localizedMessage ?: "erreur vidéo"}"
-            Log.e(TAG, "rootencoder_prepare_failed", error)
         }
         onDispose {
             if (stream.isOnPreview) stream.stopPreview()
@@ -258,7 +253,6 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
                                     }
                                 } catch (error: Exception) {
                                     status = "Échec startPreview : ${error.localizedMessage ?: "erreur"}"
-                                    Log.e(TAG, "rootencoder_start_preview_failed", error)
                                 }
                             }
                             override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -272,7 +266,7 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
             )
         }
         Text(status)
-        Text("Diagnostic uniquement : aucune diffusion RTSP n’est démarrée. Consulte logcat avec le filtre MiroirCameraDiag.")
+        Text("Mode de test uniquement : aucune diffusion RTSP n’est démarrée.")
         Text("Source active : ${source.isRunning()} ; aperçu RootEncoder : ${stream.isOnPreview}")
     }
 }
