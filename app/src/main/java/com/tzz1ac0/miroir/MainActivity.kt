@@ -3,8 +3,6 @@ package com.tzz1ac0.miroir
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -48,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.pedro.common.ConnectChecker
-import com.pedro.common.StreamingStatsReport
 import com.pedro.encoder.input.sources.audio.NoAudioSource
 import com.pedro.library.generic.GenericStream
 import com.pedro.library.view.RenderErrorCallback
@@ -190,7 +187,6 @@ private fun CameraXCameraPreview(activity: ComponentActivity, modifier: Modifier
                 provider?.unbindAll()
                 provider?.bindToLifecycle(activity, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis)
                 cameraStatus = "Caméra avant active — exposition automatique demandée"
-                Log.i(TAG, "baseline_bound=true aeMode=ON")
             } catch (error: Exception) {
                 cameraStatus = "Échec de démarrage : ${error.localizedMessage ?: "erreur caméra"}"
                 Log.e(TAG, "baseline_start_failed", error)
@@ -200,7 +196,6 @@ private fun CameraXCameraPreview(activity: ComponentActivity, modifier: Modifier
             disposed = true
             provider?.unbindAll()
             analysisExecutor.shutdown()
-            Log.i(TAG, "baseline_disposed")
         }
     }
 }
@@ -215,42 +210,19 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
         GenericStream(
             activity.applicationContext,
             object : ConnectChecker {
-                override fun onConnectionStarted(url: String) { Log.i(TAG, "rtsp_connection_started (unexpected in preview-only test)") }
-                override fun onConnectionSuccess() { Log.i(TAG, "rtsp_connection_success (unexpected in preview-only test)") }
+                override fun onConnectionStarted(url: String) {}
+                override fun onConnectionSuccess() {}
                 override fun onConnectionFailed(reason: String) { Log.e(TAG, "rtsp_connection_failed=$reason") }
-                override fun onDisconnect() { Log.i(TAG, "rtsp_disconnected") }
+                override fun onDisconnect() {}
                 override fun onAuthError() { Log.e(TAG, "rtsp_auth_error") }
-                override fun onAuthSuccess() { Log.i(TAG, "rtsp_auth_success") }
-                override fun onStreamingStats(report: StreamingStatsReport) { Log.d(TAG, "stream_stats=$report") }
+                override fun onAuthSuccess() {}
+                override fun onStreamingStats(report: com.pedro.common.StreamingStatsReport) {}
             },
             source,
             NoAudioSource()
         )
     }
-    val glProbeHandler = remember(stream) { Handler(Looper.getMainLooper()) }
-    val glProbe = remember(stream, source) {
-        object : Runnable {
-            private var sample = 0
-
-            override fun run() {
-                try {
-                    val gl = stream.getGlInterface()
-                    val texture = gl.getSurfaceTexture()
-                    Log.i(
-                        TAG,
-                        "gl_probe sample=$sample glRunning=${gl.isRunning} preview=${stream.isOnPreview} " +
-                            "sourceRunning=${source.isRunning()} texture=${texture.hashCode()} timestampNs=${texture.timestamp}"
-                    )
-                } catch (error: Exception) {
-                    Log.e(TAG, "gl_probe_failed sample=$sample", error)
-                }
-                sample++
-                if (sample < 12) glProbeHandler.postDelayed(this, 1000L)
-            }
-        }
-    }
-
-    DisposableEffect(stream, source, glProbeHandler, glProbe) {
+    DisposableEffect(stream, source) {
         try {
             stream.getGlInterface().setRenderErrorCallback(object : RenderErrorCallback {
                 override fun onRenderError(error: RuntimeException) {
@@ -260,15 +232,12 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
             stream.getGlInterface().autoHandleOrientation = true
             prepared = stream.prepareVideo(width = 640, height = 480, bitrate = 1_200_000, fps = 30)
             status = if (prepared) "prepareVideo=true — attente de SurfaceView" else "prepareVideo=false"
-            Log.i(TAG, "rootencoder_prepare_video=$prepared size=640x480 fps=30")
         } catch (error: Exception) {
             prepared = false
             status = "Échec prepareVideo : ${error.localizedMessage ?: "erreur vidéo"}"
             Log.e(TAG, "rootencoder_prepare_failed", error)
         }
         onDispose {
-            glProbeHandler.removeCallbacks(glProbe)
-            Log.i(TAG, "rootencoder_dispose isOnPreview=${stream.isOnPreview} sourceRunning=${source.isRunning()}")
             if (stream.isOnPreview) stream.stopPreview()
             stream.release()
         }
@@ -281,51 +250,11 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
                     SurfaceView(context).apply {
                         holder.addCallback(object : SurfaceHolder.Callback {
                             override fun surfaceCreated(holder: SurfaceHolder) {
-                                Log.i(TAG, "surface_created valid=${holder.surface.isValid}")
                                 status = "SurfaceView créée — démarrage RootEncoder"
                                 try {
                                     stream.startPreview(this@apply, true)
-                                    glProbeHandler.postDelayed(glProbe, 1000L)
-                                    glProbeHandler.postDelayed({
-                                        stream.getGlInterface().takePhoto { bitmap ->
-                                            try {
-                                                var sampled = 0
-                                                var nonBlack = 0
-                                                var sum = 0L
-                                                var minLuma = 255
-                                                var maxLuma = 0
-                                                val stepX = (bitmap.width / 40).coerceAtLeast(1)
-                                                val stepY = (bitmap.height / 30).coerceAtLeast(1)
-                                                for (y in 0 until bitmap.height step stepY) {
-                                                    for (x in 0 until bitmap.width step stepX) {
-                                                        val pixel = bitmap.getPixel(x, y)
-                                                        val r = android.graphics.Color.red(pixel)
-                                                        val g = android.graphics.Color.green(pixel)
-                                                        val b = android.graphics.Color.blue(pixel)
-                                                        val luma = (r * 30 + g * 59 + b * 11) / 100
-                                                        sampled++
-                                                        sum += luma
-                                                        if (luma > 8) nonBlack++
-                                                        minLuma = minOf(minLuma, luma)
-                                                        maxLuma = maxOf(maxLuma, luma)
-                                                    }
-                                                }
-                                                val meanLuma = if (sampled > 0) sum / sampled else 0
-                                                Log.i(
-                                                    TAG,
-                                                    "gl_photo_probe size=${bitmap.width}x${bitmap.height} sampled=$sampled " +
-                                                        "nonBlack=$nonBlack meanLuma=$meanLuma minLuma=$minLuma maxLuma=$maxLuma"
-                                                )
-                                            } catch (error: Exception) {
-                                                Log.e(TAG, "gl_photo_probe_failed", error)
-                                            } finally {
-                                                bitmap.recycle()
-                                            }
-                                        }
-                                    }, 1800L)
                                     post {
                                         status = "startPreview appelé; sourceRunning=${source.isRunning()}"
-                                        Log.i(TAG, "start_preview_called sourceRunning=${source.isRunning()} preview=${stream.isOnPreview}")
                                     }
                                 } catch (error: Exception) {
                                     status = "Échec startPreview : ${error.localizedMessage ?: "erreur"}"
@@ -333,10 +262,8 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
                                 }
                             }
                             override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-                                Log.i(TAG, "surface_changed valid=${holder.surface.isValid} size=${width}x$height format=$format")
                             }
                             override fun surfaceDestroyed(holder: SurfaceHolder) {
-                                Log.i(TAG, "surface_destroyed sourceRunning=${source.isRunning()}")
                             }
                         })
                     }
