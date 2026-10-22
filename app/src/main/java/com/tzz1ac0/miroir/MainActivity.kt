@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -30,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
@@ -77,6 +79,7 @@ private fun CameraScreen(activity: ComponentActivity) {
     }
     var useRootEncoder by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
+    var settingsDialogVisible by remember { mutableStateOf(false) }
     val permissionRequest = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted -> hasCameraPermission = granted }
@@ -85,6 +88,11 @@ private fun CameraScreen(activity: ComponentActivity) {
         topBar = {
             TopAppBar(
                 title = { Text("Miroir") },
+                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 actions = {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Menu")
@@ -93,6 +101,13 @@ private fun CameraScreen(activity: ComponentActivity) {
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false }
                     ) {
+                        DropdownMenuItem(
+                            text = { Text("Paramètres…") },
+                            onClick = {
+                                menuExpanded = false
+                                settingsDialogVisible = true
+                            }
+                        )
                         DropdownMenuItem(
                             text = { Text("Quitter") },
                             onClick = {
@@ -125,6 +140,21 @@ private fun CameraScreen(activity: ComponentActivity) {
                 }
             }
         }
+    }
+
+    if (settingsDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { settingsDialogVisible = false },
+            title = { Text("Paramètres") },
+            text = {
+                Text("La résolution du flux vidéo d’entrée est la résolution de l’image affichée.")
+            },
+            confirmButton = {
+                TextButton(onClick = { settingsDialogVisible = false }) {
+                    Text("Fermer")
+                }
+            }
+        )
     }
 }
 
