@@ -4,6 +4,13 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 
 ## [Non publié]
 
+## [0.2.2] - 2026-10-22
+
+### Modifié
+- Interface : suppression des compteurs d’images, statuts caméra et textes de diagnostic affichés dans la fenêtre principale.
+- Caméra : retrait du parcours d’aperçu expérimental RootEncoder de l’interface principale.
+- Logcat : conservation uniquement d’une trace au niveau erreur en cas d’échec de démarrage de la caméra.
+
 ## [0.2.1] - 2026-10-22
 
 ### Modifié
