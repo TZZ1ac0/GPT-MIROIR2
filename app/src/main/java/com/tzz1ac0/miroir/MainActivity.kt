@@ -3,6 +3,7 @@ package com.tzz1ac0.miroir
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.activity.ComponentActivity
@@ -110,7 +111,7 @@ private fun CameraScreen(activity: ComponentActivity) {
         ) {
             if (hasCameraPermission) {
                 Button(onClick = { useRootEncoder = !useRootEncoder }) {
-                    Text(if (useRootEncoder) "Revenir à l’aperçu CameraX validé" else "Tester l’aperçu RootEncoder (diagnostic)")
+                    Text(if (useRootEncoder) "Revenir à l’aperçu CameraX" else "Tester l’aperçu RootEncoder")
                 }
                 if (useRootEncoder) {
                     RootEncoderCameraPreview(activity = activity, modifier = Modifier.weight(1f))
@@ -137,14 +138,8 @@ private fun CameraXCameraPreview(activity: ComponentActivity, modifier: Modifier
         }
     }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
-    var frameCount by remember { mutableIntStateOf(0) }
-    var cameraStatus by remember { mutableStateOf("Initialisation de la caméra…") }
-
     Column(modifier = modifier.fillMaxWidth()) {
         AndroidView(factory = { previewView }, modifier = Modifier.weight(1f).fillMaxWidth())
-        Text(cameraStatus)
-        Text("Images reçues : $frameCount")
-        Text("Mode de référence : CameraX PreviewView, exposition automatique demandée.")
     }
 
     DisposableEffect(activity, previewView) {
@@ -168,25 +163,11 @@ private fun CameraXCameraPreview(activity: ComponentActivity, modifier: Modifier
                     android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE_ON
                 )
                 val analysis = analysisBuilder.build()
-                var count = 0
-                analysis.setAnalyzer(analysisExecutor) { image ->
-                    count++
-                    if (count % 15 == 0) {
-                        val snapshot = count
-                        activity.runOnUiThread {
-                            if (!disposed) {
-                                frameCount = snapshot
-                                cameraStatus = "Caméra active"
-                            }
-                        }
-                    }
-                    image.close()
-                }
+                analysis.setAnalyzer(analysisExecutor) { image -> image.close() }
                 provider?.unbindAll()
                 provider?.bindToLifecycle(activity, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis)
-                cameraStatus = "Caméra avant active — exposition automatique demandée"
             } catch (error: Exception) {
-                cameraStatus = "Échec de démarrage : ${error.localizedMessage ?: "erreur caméra"}"
+                Log.e("MiroirCamera", "Échec de démarrage de la caméra CameraX", error)
             }
         }, ContextCompat.getMainExecutor(activity))
         onDispose {
@@ -200,7 +181,6 @@ private fun CameraXCameraPreview(activity: ComponentActivity, modifier: Modifier
 /** Opt-in experiment. The validated CameraX path remains the default and is not changed. */
 @Composable
 private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modifier = Modifier) {
-    var status by remember { mutableStateOf("Initialisation de RootEncoder…") }
     var prepared by remember { mutableStateOf(false) }
     val source = remember { AutoExposureCameraXSource(activity.applicationContext) }
     val stream = remember {
@@ -227,10 +207,9 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
             })
             stream.getGlInterface().autoHandleOrientation = true
             prepared = stream.prepareVideo(width = 640, height = 480, bitrate = 1_200_000, fps = 30)
-            status = if (prepared) "prepareVideo=true — attente de SurfaceView" else "prepareVideo=false"
         } catch (error: Exception) {
             prepared = false
-            status = "Échec prepareVideo : ${error.localizedMessage ?: "erreur vidéo"}"
+            Log.e("MiroirCamera", "Échec de préparation de RootEncoder", error)
         }
         onDispose {
             if (stream.isOnPreview) stream.stopPreview()
@@ -245,14 +224,10 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
                     SurfaceView(context).apply {
                         holder.addCallback(object : SurfaceHolder.Callback {
                             override fun surfaceCreated(holder: SurfaceHolder) {
-                                status = "SurfaceView créée — démarrage RootEncoder"
                                 try {
                                     stream.startPreview(this@apply, true)
-                                    post {
-                                        status = "startPreview appelé; sourceRunning=${source.isRunning()}"
-                                    }
                                 } catch (error: Exception) {
-                                    status = "Échec startPreview : ${error.localizedMessage ?: "erreur"}"
+                                    Log.e("MiroirCamera", "Échec du démarrage de l’aperçu RootEncoder", error)
                                 }
                             }
                             override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -265,9 +240,6 @@ private fun RootEncoderCameraPreview(activity: ComponentActivity, modifier: Modi
                 modifier = Modifier.weight(1f).fillMaxWidth()
             )
         }
-        Text(status)
-        Text("Mode de test uniquement : aucune diffusion RTSP n’est démarrée.")
-        Text("Source active : ${source.isRunning()} ; aperçu RootEncoder : ${stream.isOnPreview}")
     }
 }
 
