@@ -4,6 +4,10 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 
 ## [Non publié]
 
+### Ajouté
+- Interface : barre de titre contrastée, incluant l’icône d’accès au menu.
+- Paramètres : commande « Paramètres… » ouvrant une boîte de dialogue qui précise que la résolution du flux vidéo d’entrée correspond à celle de l’image affichée.
+
 ## [0.2.2] - 2026-10-22
 
 ### Modifié
