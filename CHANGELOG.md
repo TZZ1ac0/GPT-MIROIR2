@@ -4,7 +4,11 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 
 ## [Non publié]
 
+### Ajouté
+- Menu « Paramètres… » avec une boîte de dialogue affichant la résolution vidéo reçue et la taille de l’aperçu à l’écran.
+
 ### Modifié
+- Barre supérieure contrastée pour améliorer la lisibilité.
 - Barre supérieure : titre « Miroir » et menu à trois points verticaux avec l’action « Quitter ».
 
 ## [0.2.0] - 2026-10-14
