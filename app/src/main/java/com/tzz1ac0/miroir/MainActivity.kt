@@ -232,8 +232,15 @@ private fun CameraXCameraPreview(
                 )
                 val analysis = analysisBuilder.build()
                 var count = 0
+                var lastReportedResolution = ""
                 analysis.setAnalyzer(analysisExecutor) { image ->
-                    onStreamResolutionChanged("${image.width} × ${image.height} px")
+                    val resolution = "${image.width} × ${image.height} px"
+                    if (resolution != lastReportedResolution) {
+                        lastReportedResolution = resolution
+                        activity.runOnUiThread {
+                            if (!disposed) onStreamResolutionChanged(resolution)
+                        }
+                    }
                     count++
                     if (count % 15 == 0) {
                         val snapshot = count
