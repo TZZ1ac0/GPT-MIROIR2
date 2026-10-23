@@ -177,7 +177,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                     Text("Résolution du flux vidéo d’entrée : $videoStreamResolution")
                     Text(
                         "Provenance : " + if (useRootEncoder) {
-                            "RootEncoder — GenericStream.prepareVideo(640 × 480)"
+                            "RootEncoder — GenericStream.prepareVideo(640 × 480), source caméra AutoExposureCameraXSource"
                         } else {
                             "CameraX — Preview.resolutionInfo (résolution négociée avec la caméra)"
                         }
