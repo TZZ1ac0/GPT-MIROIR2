@@ -21,12 +21,14 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -44,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -186,24 +189,50 @@ private fun CameraScreen(activity: ComponentActivity) {
             onDismissRequest = { settingsDialogVisible = false },
             title = { Text("Paramètres") },
             text = {
-                Column {
-                    Text("• Résolution native du capteur : $nativeSensorResolution")
-                    Text("• Source : Camera2 CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)")
-                    androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
-                    Text("• Flux vidéo d’entrée : $videoStreamResolution")
-                    Text(
-                        "• Provenance : " + if (useRootEncoder) {
-                            "RootEncoder — GenericStream.prepareVideo(640 × 480 px, proportion 4/3), source caméra AutoExposureCameraXSource"
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SettingsRow(
+                        label = "Résolution native du capteur",
+                        value = nativeSensorResolution
+                    )
+                    HorizontalDivider()
+                    SettingsRow(
+                        label = "Source de la résolution native",
+                        value = "Camera2 — SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)"
+                    )
+                    HorizontalDivider()
+                    SettingsRow(
+                        label = "Flux vidéo d’entrée",
+                        value = videoStreamResolution
+                    )
+                    HorizontalDivider()
+                    SettingsRow(
+                        label = "Provenance du flux",
+                        value = if (useRootEncoder) {
+                            "RootEncoder — GenericStream.prepareVideo (640 × 480 px, proportion 4/3), source AutoExposureCameraXSource"
                         } else {
                             "CameraX — Preview.resolutionInfo (résolution négociée avec la caméra)"
                         }
                     )
-                    androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 4.dp))
-                    Text("• Image affichée : $displayedImageResolution")
-                    Text("• Mesure : taille du composant AndroidView dans Compose")
-                    androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 4.dp))
-                    Text("• Surface d’affichage disponible : $availableSurfaceResolution")
-                    Text("• Mesure : taille du conteneur d’aperçu dans Compose")
+                    HorizontalDivider()
+                    SettingsRow(
+                        label = "Image affichée",
+                        value = displayedImageResolution
+                    )
+                    HorizontalDivider()
+                    SettingsRow(
+                        label = "Mesure de l’image",
+                        value = "Taille du composant AndroidView dans Compose"
+                    )
+                    HorizontalDivider()
+                    SettingsRow(
+                        label = "Surface d’affichage disponible",
+                        value = availableSurfaceResolution
+                    )
+                    HorizontalDivider()
+                    SettingsRow(
+                        label = "Mesure de la surface",
+                        value = "Taille du conteneur d’aperçu dans Compose"
+                    )
                 }
             },
             confirmButton = {
@@ -331,7 +360,7 @@ private fun RootEncoderCameraPreview(
 
     Column(
         modifier = modifier.fillMaxWidth().onSizeChanged { size ->
-            onSurfaceResolutionChanged("${size.width} × ${size.height} px")
+            onSurfaceResolutionChanged(formatResolution(size.width, size.height))
         }
     ) {
         if (prepared) {
@@ -354,10 +383,29 @@ private fun RootEncoderCameraPreview(
                     }
                 },
                 modifier = Modifier.weight(1f).fillMaxWidth().onSizeChanged { size ->
-                    onDisplayedResolutionChanged("${size.width} × ${size.height} px")
+                    onDisplayedResolutionChanged(formatResolution(size.width, size.height))
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun SettingsRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(0.42f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            text = value,
+            modifier = Modifier.weight(0.58f),
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
