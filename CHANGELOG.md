@@ -2,11 +2,12 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
-## [Non publié]
+## [0.3.0] - 2026-10-23
 
 ### Modifié
 - Paramètres : précise l’origine logicielle des résolutions, distingue la taille de l’image affichée de l’espace disponible pour l’aperçu, et affiche la résolution de cet espace.
 - Paramètres : affiche aussi la résolution native du capteur avant, lue via Camera2 (`SENSOR_INFO_PIXEL_ARRAY_SIZE`).
+- Paramètres : présente les informations sous forme de tableau à deux colonnes, avec les rapports d’image entre crochets et un défilement si nécessaire.
 - Barre supérieure : indique le mode actif (CameraX ou RootEncoder) en italique et actualise le titre lors du changement de mode.
 
 ## [0.2.3] - 2026-10-22
