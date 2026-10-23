@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -189,7 +191,7 @@ private fun CameraScreen(activity: ComponentActivity) {
             onDismissRequest = { settingsDialogVisible = false },
             title = { Text("Paramètres") },
             text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
                     SettingsRow(
                         label = "Résolution native du capteur",
                         value = nativeSensorResolution
@@ -416,7 +418,7 @@ fun greetingFor(name: String = "World"): String = "Hello $name!"
 private fun formatResolution(width: Int, height: Int): String {
     fun gcd(a: Int, b: Int): Int = if (b == 0) a else gcd(b, a % b)
     val divisor = gcd(width, height).coerceAtLeast(1)
-    return "$width × $height px — proportion de l’image : ${width / divisor}/${height / divisor}"
+    return "$width × $height px [${width / divisor}/${height / divisor}]"
 }
 
 private fun getNativeSensorResolution(activity: ComponentActivity): String {
