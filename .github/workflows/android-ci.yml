@@ -48,3 +48,58 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
+
+  release-version:
+    name: Validate release version
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate version bump and changelog
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "$BASE_REF"
+
+          CHANGED_FILES="$(git diff --name-only "origin/$BASE_REF...HEAD")"
+          if ! grep -Eq '^(app/|gradle.properties$|build.gradle.kts$|settings.gradle.kts$|gradle/)' <<< "$CHANGED_FILES"; then
+            echo "No application or build changes; release version bump is not required."
+            exit 0
+          fi
+
+          BASE_VERSION="$(git show "origin/$BASE_REF:gradle.properties" | sed -n 's/^VERSION_NAME=//p')"
+          HEAD_VERSION="$(sed -n 's/^VERSION_NAME=//p' gradle.properties | head -n 1)"
+
+          if [[ ! "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Base VERSION_NAME '$BASE_VERSION' is not valid SemVer (X.Y.Z)."
+            exit 1
+          fi
+          if [[ ! "$HEAD_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::VERSION_NAME '$HEAD_VERSION' must follow SemVer (X.Y.Z)."
+            exit 1
+          fi
+
+          if ! python3 - "$BASE_VERSION" "$HEAD_VERSION" <<'PY'
+          import sys
+          base = tuple(map(int, sys.argv[1].split(".")))
+          head = tuple(map(int, sys.argv[2].split(".")))
+          if head <= base:
+              print(f"VERSION_NAME must increase for every release-triggering PR: {sys.argv[1]} -> {sys.argv[2]}", file=sys.stderr)
+              sys.exit(1)
+          PY
+          then
+            echo "::error::Increase VERSION_NAME relative to the target branch."
+            exit 1
+          fi
+
+          if ! grep -Fq "## [$HEAD_VERSION] -" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md must contain a dated section '## [$HEAD_VERSION] - YYYY-MM-DD'."
+            exit 1
+          fi
+
+          echo "Release version validated: $BASE_VERSION -> $HEAD_VERSION"
