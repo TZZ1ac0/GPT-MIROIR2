@@ -2,6 +2,12 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.7.0] - 2026-10-23
+
+### Tests
+- Ajoute des tests instrumentés pour l’absence d’autorisation caméra, le refus de la demande et l’acceptation de l’autorisation.
+- Ajoute UI Automator pour interagir avec la boîte de dialogue système d’autorisation.
+
 ## [0.6.0] - 2026-10-23
 
 ### Tests
