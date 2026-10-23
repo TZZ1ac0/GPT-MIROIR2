@@ -91,7 +91,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                 PackageManager.PERMISSION_GRANTED
         )
     }
-    var useRootEncoder by remember { mutableStateOf(false) }
+    var cameraMode by remember { mutableStateOf(CameraMode.DEFAULT) }
     var menuExpanded by remember { mutableStateOf(false) }
     var settingsDialogVisible by remember { mutableStateOf(false) }
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
@@ -115,7 +115,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                                     fontStyle = FontStyle.Italic
                                 )
                             ) {
-                                append(if (useRootEncoder) "RootEncoder" else "CameraX")
+                                append(cameraMode.title)
                             }
                         }
                     )
@@ -133,6 +133,22 @@ private fun CameraScreen(activity: ComponentActivity) {
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false }
                     ) {
+                        DropdownMenuItem(
+                            text = { Text("CameraX") },
+                            enabled = CameraMode.CAMERAX.isSelectableWhen(cameraMode),
+                            onClick = {
+                                cameraMode = CameraMode.CAMERAX
+                                menuExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("RootEncoder") },
+                            enabled = CameraMode.ROOT_ENCODER.isSelectableWhen(cameraMode),
+                            onClick = {
+                                cameraMode = CameraMode.ROOT_ENCODER
+                                menuExpanded = false
+                            }
+                        )
                         DropdownMenuItem(
                             text = { Text("Paramètres…") },
                             onClick = {
@@ -157,10 +173,7 @@ private fun CameraScreen(activity: ComponentActivity) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (hasCameraPermission) {
-                Button(onClick = { useRootEncoder = !useRootEncoder }) {
-                    Text(if (useRootEncoder) "Revenir à l’aperçu CameraX" else "Tester l’aperçu RootEncoder")
-                }
-                if (useRootEncoder) {
+                if (cameraMode == CameraMode.ROOT_ENCODER) {
                     RootEncoderCameraPreview(
                         activity = activity,
                         modifier = Modifier.weight(1f),
@@ -209,7 +222,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                     HorizontalDivider()
                     SettingsRow(
                         label = "Provenance du flux",
-                        value = if (useRootEncoder) {
+                        value = if (cameraMode == CameraMode.ROOT_ENCODER) {
                             "RootEncoder — GenericStream.prepareVideo (640 × 480 px, proportion 4/3), source AutoExposureCameraXSource"
                         } else {
                             "CameraX — Preview.resolutionInfo (résolution négociée avec la caméra)"

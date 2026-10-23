@@ -2,6 +2,29 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.7.0] - 2026-10-23
+
+### Tests
+- Ajoute des tests instrumentés pour l’absence d’autorisation caméra, le refus de la demande et l’acceptation de l’autorisation.
+- Ajoute UI Automator pour interagir avec la boîte de dialogue système d’autorisation.
+
+## [0.6.0] - 2026-10-23
+
+### Tests
+- Ajoute des tests d’interface Compose pour le changement de mode caméra dans le menu et l’ouverture/fermeture des paramètres.
+- Ajoute les dépendances AndroidX Test nécessaires aux tests instrumentés.
+
+## [0.5.0] - 2026-10-23
+
+### Tests
+- Ajoute des tests unitaires pour le mode CameraX par défaut, les règles d’activation du menu et les libellés des modes.
+
+## [0.4.0] - 2026-10-23
+
+### Modifié
+- Interface : déplace le choix entre CameraX et RootEncoder dans le menu ; le mode actif est grisé et CameraX est sélectionné par défaut au démarrage.
+
+
 ## [0.3.0] - 2026-10-23
 
 ### Modifié
