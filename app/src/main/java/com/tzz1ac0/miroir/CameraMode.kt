@@ -9,6 +9,10 @@ enum class CameraMode(val title: String) {
     CAMERAX("CameraX"),
     ROOT_ENCODER("RootEncoder");
 
+    companion object {
+        val DEFAULT = CAMERAX
+    }
+
     /** The active mode is shown as disabled in the mode-selection menu. */
     fun isSelectableWhen(activeMode: CameraMode): Boolean = this != activeMode
 }
