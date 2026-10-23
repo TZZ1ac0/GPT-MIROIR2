@@ -222,7 +222,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                     HorizontalDivider()
                     SettingsRow(
                         label = "Provenance du flux",
-                        value = if (useRootEncoder) {
+                        value = if (cameraMode == CameraMode.ROOT_ENCODER) {
                             "RootEncoder — GenericStream.prepareVideo (640 × 480 px, proportion 4/3), source AutoExposureCameraXSource"
                         } else {
                             "CameraX — Preview.resolutionInfo (résolution négociée avec la caméra)"
