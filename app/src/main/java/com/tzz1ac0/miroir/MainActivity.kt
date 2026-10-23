@@ -2,6 +2,9 @@ package com.tzz1ac0.miroir
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.Context
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.os.Bundle
 import android.util.Log
 import android.view.SurfaceHolder
@@ -87,6 +90,7 @@ private fun CameraScreen(activity: ComponentActivity) {
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
     var displayedImageResolution by remember { mutableStateOf("Indisponible") }
     var availableSurfaceResolution by remember { mutableStateOf("Indisponible") }
+    val nativeSensorResolution = remember { getNativeSensorResolution(activity) }
     val permissionRequest = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted -> hasCameraPermission = granted }
@@ -186,6 +190,8 @@ private fun CameraScreen(activity: ComponentActivity) {
                     Text("Mesure : taille du composant AndroidView dans Compose")
                     Text("Surface d’affichage disponible dans l’interface : $availableSurfaceResolution")
                     Text("Mesure : taille du conteneur d’aperçu dans Compose")
+                    Text("Résolution native du capteur : $nativeSensorResolution")
+                    Text("Source : Camera2 CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)")
                 }
             },
             confirmButton = {
@@ -344,3 +350,21 @@ private fun RootEncoderCameraPreview(
 }
 
 fun greetingFor(name: String = "World"): String = "Hello $name!"
+
+
+private fun getNativeSensorResolution(activity: ComponentActivity): String {
+    return try {
+        val cameraManager = activity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val frontCameraId = cameraManager.cameraIdList.firstOrNull { cameraId ->
+            cameraManager.getCameraCharacteristics(cameraId)
+                .get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT
+        } ?: return "Indisponible (caméra avant introuvable)"
+        val size = cameraManager.getCameraCharacteristics(frontCameraId)
+            .get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE)
+            ?: return "Indisponible"
+        "${size.width} × ${size.height} px"
+    } catch (error: Exception) {
+        Log.e("MiroirCamera", "Impossible de lire la résolution native du capteur", error)
+        "Indisponible"
+    }
+}
