@@ -103,7 +103,12 @@ private fun CameraScreen(activity: ComponentActivity) {
                     Text(
                         text = buildAnnotatedString {
                             append("Miroir — ")
-                            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                            withStyle(
+                                SpanStyle(
+                                    fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                    fontStyle = FontStyle.Italic
+                                )
+                            ) {
                                 append(if (useRootEncoder) "RootEncoder" else "CameraX")
                             }
                         }
@@ -181,20 +186,23 @@ private fun CameraScreen(activity: ComponentActivity) {
             title = { Text("Paramètres") },
             text = {
                 Column {
-                    Text("Résolution du flux vidéo d’entrée : $videoStreamResolution")
+                    Text("• Résolution native du capteur : $nativeSensorResolution")
+                    Text("• Source : Camera2 CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)")
+                    androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 4.dp))
+                    Text("• Flux vidéo d’entrée : $videoStreamResolution")
                     Text(
-                        "Provenance : " + if (useRootEncoder) {
+                        "• Provenance : " + if (useRootEncoder) {
                             "RootEncoder — GenericStream.prepareVideo(640 × 480), source caméra AutoExposureCameraXSource"
                         } else {
                             "CameraX — Preview.resolutionInfo (résolution négociée avec la caméra)"
                         }
                     )
-                    Text("Résolution de l’image affichée : $displayedImageResolution")
-                    Text("Mesure : taille du composant AndroidView dans Compose")
-                    Text("Surface d’affichage disponible dans l’interface : $availableSurfaceResolution")
-                    Text("Mesure : taille du conteneur d’aperçu dans Compose")
-                    Text("Résolution native du capteur : $nativeSensorResolution")
-                    Text("Source : Camera2 CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)")
+                    androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 4.dp))
+                    Text("• Image affichée : $displayedImageResolution")
+                    Text("• Mesure : taille du composant AndroidView dans Compose")
+                    androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 4.dp))
+                    Text("• Surface d’affichage disponible : $availableSurfaceResolution")
+                    Text("• Mesure : taille du conteneur d’aperçu dans Compose")
                 }
             },
             confirmButton = {
@@ -224,13 +232,13 @@ private fun CameraXCameraPreview(
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
     Column(
         modifier = modifier.fillMaxWidth().onSizeChanged { size ->
-            onSurfaceResolutionChanged("${size.width} × ${size.height} px")
+            onSurfaceResolutionChanged(formatResolution(size.width, size.height))
         }
     ) {
         AndroidView(
             factory = { previewView },
             modifier = Modifier.weight(1f).fillMaxWidth().onSizeChanged { size ->
-                onDisplayedResolutionChanged("${size.width} × ${size.height} px")
+                onDisplayedResolutionChanged(formatResolution(size.width, size.height))
             }
         )
     }
@@ -260,7 +268,7 @@ private fun CameraXCameraPreview(
                 provider?.unbindAll()
                 provider?.bindToLifecycle(activity, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis)
                 preview.resolutionInfo?.resolution?.let { resolution ->
-                    onStreamResolutionChanged("${resolution.width} × ${resolution.height} px")
+                    onStreamResolutionChanged(formatResolution(resolution.width, resolution.height))
                 }
             } catch (error: Exception) {
                 Log.e("MiroirCamera", "Échec de démarrage de la caméra CameraX", error)
@@ -309,7 +317,7 @@ private fun RootEncoderCameraPreview(
             })
             stream.getGlInterface().autoHandleOrientation = true
             prepared = stream.prepareVideo(width = 640, height = 480, bitrate = 1_200_000, fps = 30)
-            onStreamResolutionChanged(if (prepared) "640 × 480 px" else "Indisponible")
+            onStreamResolutionChanged(if (prepared) formatResolution(640, 480) else "Indisponible")
         } catch (error: Exception) {
             prepared = false
             Log.e("MiroirCamera", "Échec de préparation de RootEncoder", error)
@@ -355,6 +363,13 @@ private fun RootEncoderCameraPreview(
 fun greetingFor(name: String = "World"): String = "Hello $name!"
 
 
+
+private fun formatResolution(width: Int, height: Int): String {
+    fun gcd(a: Int, b: Int): Int = if (b == 0) a else gcd(b, a % b)
+    val divisor = gcd(width, height).coerceAtLeast(1)
+    return "$width × $height px — proportion de l’image : ${width / divisor}/${height / divisor}"
+}
+
 private fun getNativeSensorResolution(activity: ComponentActivity): String {
     return try {
         val cameraManager = activity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -365,7 +380,7 @@ private fun getNativeSensorResolution(activity: ComponentActivity): String {
         val size = cameraManager.getCameraCharacteristics(frontCameraId)
             .get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE)
             ?: return "Indisponible"
-        "${size.width} × ${size.height} px"
+        formatResolution(size.width, size.height)
     } catch (error: Exception) {
         Log.e("MiroirCamera", "Impossible de lire la résolution native du capteur", error)
         "Indisponible"
