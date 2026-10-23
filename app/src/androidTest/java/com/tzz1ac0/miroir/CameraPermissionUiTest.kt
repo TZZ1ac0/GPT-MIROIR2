@@ -1,5 +1,7 @@
 package com.tzz1ac0.miroir
 
+import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -36,7 +38,10 @@ class CameraPermissionUiTest {
         revokeCameraPermissionAndRecreateActivity()
 
         composeTestRule.onNodeWithText("Autoriser la caméra").performClick()
-        clickPermissionDialogButton(".*permission_deny_button")
+        clickPermissionDialogButton(
+            resourceIdPattern = ".*permission_deny_button",
+            textPattern = "(?i)(don't allow|ne pas autoriser|refuser)"
+        )
 
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(
@@ -51,7 +56,8 @@ class CameraPermissionUiTest {
 
         composeTestRule.onNodeWithText("Autoriser la caméra").performClick()
         clickPermissionDialogButton(
-            ".*permission_allow_foreground_only_button|.*permission_allow_button|.*permission_allow_one_time_button"
+            resourceIdPattern = ".*permission_allow_foreground_only_button|.*permission_allow_button|.*permission_allow_one_time_button",
+            textPattern = "(?i)(while using the app|only this time|allow|pendant l'utilisation|lorsque l'application est active|autoriser)"
         )
 
         composeTestRule.waitForIdle()
@@ -69,12 +75,14 @@ class CameraPermissionUiTest {
         composeTestRule.waitForIdle()
     }
 
-    private fun clickPermissionDialogButton(resourceIdPattern: String) {
-        val button = device.wait(
-            Until.findObject(By.res(Pattern.compile(resourceIdPattern))),
-            5_000
-        )
-        checkNotNull(button) { "Could not find permission dialog button matching $resourceIdPattern" }
-            .click()
+    private fun clickPermissionDialogButton(resourceIdPattern: String, textPattern: String) {
+        val resourceSelector = By.res(Pattern.compile(resourceIdPattern))
+        val textSelector = By.text(Pattern.compile(textPattern))
+        val button = device.wait(Until.findObject(resourceSelector), 10_000)
+            ?: device.wait(Until.findObject(textSelector), 10_000)
+
+        checkNotNull(button) {
+            "Could not find permission dialog button by resource ID $resourceIdPattern or text $textPattern"
+        }.click()
     }
 }
