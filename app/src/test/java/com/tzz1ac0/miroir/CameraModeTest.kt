@@ -8,7 +8,7 @@ import org.junit.Test
 class CameraModeTest {
     @Test
     fun cameraXIsTheDefaultMode() {
-        assertEquals(CameraMode.CAMERAX, CameraMode.values().first())
+        assertEquals(CameraMode.CAMERAX, CameraMode.DEFAULT)
     }
 
     @Test
