@@ -4,6 +4,10 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 
 ## [Non publié]
 
+### Modifié
+- Paramètres : précise l’origine logicielle des résolutions, distingue la taille de l’image affichée de l’espace disponible pour l’aperçu, et affiche la résolution de cet espace.
+- Barre supérieure : indique le mode actif (CameraX ou RootEncoder) en italique et actualise le titre lors du changement de mode.
+
 ## [0.2.3] - 2026-10-22
 
 ### Ajouté
