@@ -2,6 +2,14 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.4.0] - 2026-10-23
+
+### Modifié
+- Interface : déplace le choix entre CameraX et RootEncoder dans le menu ; le mode actif est grisé et CameraX est sélectionné par défaut au démarrage.
+
+
+Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
+
 ## [0.3.0] - 2026-10-23
 
 ### Modifié
