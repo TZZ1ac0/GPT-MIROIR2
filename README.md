@@ -45,7 +45,7 @@ Les messages de commit suivent [Conventional Commits](https://www.conventionalco
 
 Le projet suit [Semantic Versioning](https://semver.org/lang/fr/). La version de l'application est déclarée dans `VERSION_NAME` de `gradle.properties`.
 
-**Pour chaque publication, augmente explicitement `VERSION_NAME` dans la PR** (par exemple `0.2.0` vers `0.3.0`) et mets à jour `CHANGELOG.md`. La fusion sur `main` déclenche la compilation, les tests, la création du tag `vX.Y.Z`, la GitHub Release et le téléversement de l'APK installable. Si la version existe déjà pour un autre commit, le workflow échoue au lieu de remplacer silencieusement la version publiée. Une relance est autorisée si le tag existant pointe exactement vers le commit courant.
+**Chaque PR destinée à être fusionnée sur `main` doit augmenter `VERSION_NAME`** (par exemple `0.2.3` vers `0.3.0`) et ajouter une section datée correspondante dans `CHANGELOG.md`. La CI vérifie automatiquement ces deux conditions et bloque une PR si la version n'augmente pas. La fusion sur `main` déclenche la compilation, les tests, la création du tag `vX.Y.Z`, la GitHub Release et le téléversement de l'APK installable. Si la version existe déjà pour un autre commit, le workflow échoue au lieu de remplacer silencieusement la version publiée. Une relance est autorisée si le tag existant pointe exactement vers le commit courant.
 
 Consulter [CHANGELOG.md](CHANGELOG.md) et la page [Releases](https://github.com/TZZ1ac0/GPT-Android-Miroir-3-TZZ1AC0/releases).
 
