@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.5.0] - 2026-10-23
+
+### Tests
+- Ajoute des tests unitaires pour le mode CameraX par défaut, les règles d’activation du menu et les libellés des modes.
+
 ## [0.4.0] - 2026-10-23
 
 ### Modifié
