@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.layout.onSizeChanged
@@ -99,12 +100,14 @@ private fun CameraScreen(activity: ComponentActivity) {
         topBar = {
             TopAppBar(
                 title = {
-                    Text {
-                        append("Miroir — ")
-                        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                            append(if (useRootEncoder) "RootEncoder" else "CameraX")
+                    Text(
+                        text = buildAnnotatedString {
+                            append("Miroir — ")
+                            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                                append(if (useRootEncoder) "RootEncoder" else "CameraX")
+                            }
                         }
-                    }
+                    )
                 },
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
