@@ -91,7 +91,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                 PackageManager.PERMISSION_GRANTED
         )
     }
-    var useRootEncoder by remember { mutableStateOf(false) }
+    var cameraMode by remember { mutableStateOf(CameraMode.DEFAULT) }
     var menuExpanded by remember { mutableStateOf(false) }
     var settingsDialogVisible by remember { mutableStateOf(false) }
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
@@ -115,7 +115,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                                     fontStyle = FontStyle.Italic
                                 )
                             ) {
-                                append(if (useRootEncoder) "RootEncoder" else "CameraX")
+                                append(cameraMode.title)
                             }
                         }
                     )
@@ -135,17 +135,17 @@ private fun CameraScreen(activity: ComponentActivity) {
                     ) {
                         DropdownMenuItem(
                             text = { Text("CameraX") },
-                            enabled = useRootEncoder,
+                            enabled = CameraMode.CAMERAX.isSelectableWhen(cameraMode),
                             onClick = {
-                                useRootEncoder = false
+                                cameraMode = CameraMode.CAMERAX
                                 menuExpanded = false
                             }
                         )
                         DropdownMenuItem(
                             text = { Text("RootEncoder") },
-                            enabled = !useRootEncoder,
+                            enabled = CameraMode.ROOT_ENCODER.isSelectableWhen(cameraMode),
                             onClick = {
-                                useRootEncoder = true
+                                cameraMode = CameraMode.ROOT_ENCODER
                                 menuExpanded = false
                             }
                         )
@@ -173,7 +173,7 @@ private fun CameraScreen(activity: ComponentActivity) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (hasCameraPermission) {
-                if (useRootEncoder) {
+                if (cameraMode == CameraMode.ROOT_ENCODER) {
                     RootEncoderCameraPreview(
                         activity = activity,
                         modifier = Modifier.weight(1f),
