@@ -22,6 +22,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -188,11 +189,11 @@ private fun CameraScreen(activity: ComponentActivity) {
                 Column {
                     Text("• Résolution native du capteur : $nativeSensorResolution")
                     Text("• Source : Camera2 CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)")
-                    androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 4.dp))
+                    androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
                     Text("• Flux vidéo d’entrée : $videoStreamResolution")
                     Text(
                         "• Provenance : " + if (useRootEncoder) {
-                            "RootEncoder — GenericStream.prepareVideo(640 × 480), source caméra AutoExposureCameraXSource"
+                            "RootEncoder — GenericStream.prepareVideo(640 × 480 px, proportion 4/3), source caméra AutoExposureCameraXSource"
                         } else {
                             "CameraX — Preview.resolutionInfo (résolution négociée avec la caméra)"
                         }
