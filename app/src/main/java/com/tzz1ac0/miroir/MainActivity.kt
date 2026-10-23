@@ -41,6 +41,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -83,6 +86,7 @@ private fun CameraScreen(activity: ComponentActivity) {
     var settingsDialogVisible by remember { mutableStateOf(false) }
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
     var displayedImageResolution by remember { mutableStateOf("Indisponible") }
+    var availableSurfaceResolution by remember { mutableStateOf("Indisponible") }
     val permissionRequest = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted -> hasCameraPermission = granted }
@@ -90,7 +94,14 @@ private fun CameraScreen(activity: ComponentActivity) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Miroir") },
+                title = {
+                    Text {
+                        append("Miroir — ")
+                        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                            append(if (useRootEncoder) "RootEncoder" else "CameraX")
+                        }
+                    }
+                },
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -136,14 +147,16 @@ private fun CameraScreen(activity: ComponentActivity) {
                         activity = activity,
                         modifier = Modifier.weight(1f),
                         onStreamResolutionChanged = { videoStreamResolution = it },
-                        onDisplayedResolutionChanged = { displayedImageResolution = it }
+                        onDisplayedResolutionChanged = { displayedImageResolution = it },
+                        onSurfaceResolutionChanged = { availableSurfaceResolution = it }
                     )
                 } else {
                     CameraXCameraPreview(
                         activity = activity,
                         modifier = Modifier.weight(1f),
                         onStreamResolutionChanged = { videoStreamResolution = it },
-                        onDisplayedResolutionChanged = { displayedImageResolution = it }
+                        onDisplayedResolutionChanged = { displayedImageResolution = it },
+                        onSurfaceResolutionChanged = { availableSurfaceResolution = it }
                     )
                 }
             } else {
@@ -161,8 +174,18 @@ private fun CameraScreen(activity: ComponentActivity) {
             title = { Text("Paramètres") },
             text = {
                 Column {
-                    Text("Résolution du flux vidéo : $videoStreamResolution")
+                    Text("Résolution du flux vidéo d’entrée : $videoStreamResolution")
+                    Text(
+                        "Provenance : " + if (useRootEncoder) {
+                            "RootEncoder — GenericStream.prepareVideo(640 × 480)"
+                        } else {
+                            "CameraX — Preview.resolutionInfo (résolution négociée avec la caméra)"
+                        }
+                    )
                     Text("Résolution de l’image affichée : $displayedImageResolution")
+                    Text("Mesure : taille du composant AndroidView dans Compose")
+                    Text("Surface d’affichage disponible dans l’interface : $availableSurfaceResolution")
+                    Text("Mesure : taille du conteneur d’aperçu dans Compose")
                 }
             },
             confirmButton = {
@@ -180,7 +203,8 @@ private fun CameraXCameraPreview(
     activity: ComponentActivity,
     modifier: Modifier = Modifier,
     onStreamResolutionChanged: (String) -> Unit,
-    onDisplayedResolutionChanged: (String) -> Unit
+    onDisplayedResolutionChanged: (String) -> Unit,
+    onSurfaceResolutionChanged: (String) -> Unit
 ) {
     val previewView = remember {
         PreviewView(activity).apply {
@@ -189,7 +213,11 @@ private fun CameraXCameraPreview(
         }
     }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier.fillMaxWidth().onSizeChanged { size ->
+            onSurfaceResolutionChanged("${size.width} × ${size.height} px")
+        }
+    ) {
         AndroidView(
             factory = { previewView },
             modifier = Modifier.weight(1f).fillMaxWidth().onSizeChanged { size ->
@@ -243,7 +271,8 @@ private fun RootEncoderCameraPreview(
     activity: ComponentActivity,
     modifier: Modifier = Modifier,
     onStreamResolutionChanged: (String) -> Unit,
-    onDisplayedResolutionChanged: (String) -> Unit
+    onDisplayedResolutionChanged: (String) -> Unit,
+    onSurfaceResolutionChanged: (String) -> Unit
 ) {
     var prepared by remember { mutableStateOf(false) }
     val source = remember { AutoExposureCameraXSource(activity.applicationContext) }
@@ -282,7 +311,11 @@ private fun RootEncoderCameraPreview(
         }
     }
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier.fillMaxWidth().onSizeChanged { size ->
+            onSurfaceResolutionChanged("${size.width} × ${size.height} px")
+        }
+    ) {
         if (prepared) {
             AndroidView(
                 factory = { context ->
