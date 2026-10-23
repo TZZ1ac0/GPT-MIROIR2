@@ -2,6 +2,12 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.6.0] - 2026-10-23
+
+### Tests
+- Ajoute des tests d’interface Compose pour le changement de mode caméra dans le menu et l’ouverture/fermeture des paramètres.
+- Ajoute les dépendances AndroidX Test nécessaires aux tests instrumentés.
+
 ## [0.5.0] - 2026-10-23
 
 ### Tests
