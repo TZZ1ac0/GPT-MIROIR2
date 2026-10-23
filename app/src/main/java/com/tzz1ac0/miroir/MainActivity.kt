@@ -134,6 +134,22 @@ private fun CameraScreen(activity: ComponentActivity) {
                         onDismissRequest = { menuExpanded = false }
                     ) {
                         DropdownMenuItem(
+                            text = { Text("CameraX") },
+                            enabled = useRootEncoder,
+                            onClick = {
+                                useRootEncoder = false
+                                menuExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("RootEncoder") },
+                            enabled = !useRootEncoder,
+                            onClick = {
+                                useRootEncoder = true
+                                menuExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
                             text = { Text("Paramètres…") },
                             onClick = {
                                 menuExpanded = false
@@ -157,9 +173,6 @@ private fun CameraScreen(activity: ComponentActivity) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (hasCameraPermission) {
-                Button(onClick = { useRootEncoder = !useRootEncoder }) {
-                    Text(if (useRootEncoder) "Revenir à l’aperçu CameraX" else "Tester l’aperçu RootEncoder")
-                }
                 if (useRootEncoder) {
                     RootEncoderCameraPreview(
                         activity = activity,
