@@ -469,6 +469,7 @@ private fun RootEncoderCameraPreview(
     onSurfaceResolutionChanged: (String) -> Unit
 ) {
     var prepared by remember { mutableStateOf(false) }
+    var gestureZoom by remember { mutableStateOf(1f) }
     val source = remember { AutoExposureCameraXSource(activity.applicationContext) }
     val stream = remember {
         GenericStream(
@@ -555,9 +556,29 @@ private fun RootEncoderCameraPreview(
                         })
                     }
                 },
-                modifier = previewModifier.onSizeChanged { size ->
-                    onDisplayedResolutionChanged(formatResolution(size.width, size.height))
-                }
+                modifier = previewModifier
+                    .pointerInput(source, prepared) {
+                        detectTransformGestures { _, _, zoomChange, _ ->
+                            if (prepared) {
+                                val zoomRange = source.getZoomRange()
+                                val minZoom = if (zoomRange.lower > 0f) zoomRange.lower else 1f
+                                val maxZoom = if (zoomRange.upper >= minZoom) zoomRange.upper else 4f
+                                gestureZoom = (gestureZoom * zoomChange).coerceIn(minZoom, maxZoom)
+                                source.setZoom(gestureZoom)
+                            }
+                        }
+                    }
+                    .pointerInput(source, prepared) {
+                        detectTapGestures(
+                            onDoubleTap = {
+                                gestureZoom = 1f
+                                source.setZoom(1f)
+                            }
+                        )
+                    }
+                    .onSizeChanged { size ->
+                        onDisplayedResolutionChanged(formatResolution(size.width, size.height))
+                    }
                 )
             }
         }
