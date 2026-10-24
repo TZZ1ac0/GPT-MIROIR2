@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.8.0] - 2026-10-24
+
+### Corrigé
+- Caméra : conserve le mode CameraX ou RootEncoder sélectionné lors du passage du portrait au paysage et inversement.
+
 ## [0.7.0] - 2026-10-23
 
 ### Tests
@@ -64,4 +69,3 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ### Ajouté
 - Fondation Android Kotlin / Jetpack Compose.
 - Écran « Hello World! » et tests unitaires.
-- CI GitHub Actions, badges, documentation et automatisation des releases.
