@@ -565,7 +565,7 @@ private fun RootEncoderCameraPreview(
                             context,
                             object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
                                 override fun onScale(detector: ScaleGestureDetector): Boolean {
-                                    gestureZoom = (gestureZoom * detector.scaleFactor).coerceIn(1f, 4f)
+                                    gestureZoom = (gestureZoom * (1f + (detector.scaleFactor - 1f) * 1.5f)).coerceIn(1f, 4f)
                                     applyGestureTransform()
                                     return true
                                 }
@@ -597,8 +597,8 @@ private fun RootEncoderCameraPreview(
                                     lastFocusX = focusX
                                     lastFocusY = focusY
                                 } else if (event.actionMasked == MotionEvent.ACTION_MOVE && gestureZoom > 1f) {
-                                    panX += focusX - lastFocusX
-                                    panY += focusY - lastFocusY
+                                    panX += (focusX - lastFocusX) * 1.4f
+                                    panY += (focusY - lastFocusY) * 1.4f
                                     applyGestureTransform()
                                     lastFocusX = focusX
                                     lastFocusY = focusY
