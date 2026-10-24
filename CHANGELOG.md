@@ -5,7 +5,7 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ## [0.12.0] - 2026-10-24
 
 ### Ajouté
-- CameraX : ajoute le zoom par pincement à deux doigts lorsque l’option « Full » est activée, avec respect des limites de zoom de la caméra.
+- CameraX : ajoute le zoom par pincement à deux doigts lorsque l’option « Full » est activée, avec respect des limites de zoom de la caméra ; un double tap réinitialise le zoom à 1×.
 
 ## [0.11.0] - 2026-10-24
 
