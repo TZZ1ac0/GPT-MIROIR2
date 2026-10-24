@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.11.0] - 2026-10-24
+
+### Ajouté
+- RootEncoder : ajoute l’option « Full » pour demander la résolution caméra disponible la plus élevée et afficher l’aperçu sans déformation, tout en conservant le cadrage initial lorsque l’option est désactivée.
+
 ## [0.10.0] - 2026-10-24
 
 ### Ajouté

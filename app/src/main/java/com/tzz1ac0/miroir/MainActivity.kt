@@ -20,12 +20,15 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -49,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -68,6 +72,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.pedro.common.ConnectChecker
 import com.pedro.encoder.input.sources.audio.NoAudioSource
+import com.pedro.encoder.input.video.CameraHelper
 import com.pedro.library.generic.GenericStream
 import com.pedro.library.view.RenderErrorCallback
 import com.tzz1ac0.miroir.camera.AutoExposureCameraXSource
@@ -101,6 +106,7 @@ private fun CameraScreen(activity: ComponentActivity) {
     var settingsDialogVisible by remember { mutableStateOf(false) }
     var selectedSettingsTab by rememberSaveable { mutableStateOf(0) }
     var fullCameraX by rememberSaveable { mutableStateOf(false) }
+    var fullRootEncoder by rememberSaveable { mutableStateOf(false) }
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
     var displayedImageResolution by remember { mutableStateOf("Indisponible") }
     var availableSurfaceResolution by remember { mutableStateOf("Indisponible") }
@@ -181,13 +187,16 @@ private fun CameraScreen(activity: ComponentActivity) {
         ) {
             if (hasCameraPermission) {
                 if (cameraMode == CameraMode.ROOT_ENCODER) {
-                    RootEncoderCameraPreview(
-                        activity = activity,
-                        modifier = Modifier.weight(1f),
+                    key(fullRootEncoder) {
+                        RootEncoderCameraPreview(
+                            activity = activity,
+                            full = fullRootEncoder,
+                            modifier = Modifier.weight(1f),
                         onStreamResolutionChanged = { videoStreamResolution = it },
                         onDisplayedResolutionChanged = { displayedImageResolution = it },
-                        onSurfaceResolutionChanged = { availableSurfaceResolution = it }
-                    )
+                            onSurfaceResolutionChanged = { availableSurfaceResolution = it }
+                        )
+                    }
                 } else {
                     CameraXCameraPreview(
                         activity = activity,
@@ -294,7 +303,22 @@ private fun CameraScreen(activity: ComponentActivity) {
                                 )
                             }
                         }
-                        2 -> Unit
+                        2 -> Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Full",
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Checkbox(
+                                    checked = fullRootEncoder,
+                                    onCheckedChange = { fullRootEncoder = it }
+                                )
+                            }
+                        }
                     }
                 }
             },
@@ -392,6 +416,7 @@ private fun CameraXCameraPreview(
 @Composable
 private fun RootEncoderCameraPreview(
     activity: ComponentActivity,
+    full: Boolean,
     modifier: Modifier = Modifier,
     onStreamResolutionChanged: (String) -> Unit,
     onDisplayedResolutionChanged: (String) -> Unit,
@@ -415,8 +440,15 @@ private fun RootEncoderCameraPreview(
             NoAudioSource()
         )
     }
-    DisposableEffect(stream, source) {
+    DisposableEffect(stream, source, full) {
         try {
+            if (full) {
+                val largestResolution = source.getCameraResolutions(CameraHelper.Facing.FRONT)
+                    .maxByOrNull { it.width.toLong() * it.height.toLong() }
+                source.setRequiredResolution(largestResolution)
+            } else {
+                source.setRequiredResolution(null)
+            }
             stream.getGlInterface().setRenderErrorCallback(object : RenderErrorCallback {
                 override fun onRenderError(error: RuntimeException) {
                 }
@@ -440,7 +472,26 @@ private fun RootEncoderCameraPreview(
         }
     ) {
         if (prepared) {
-            AndroidView(
+            BoxWithConstraints(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                val targetAspectRatio = if (full) {
+                    val resolution = source.getCameraResolutions(CameraHelper.Facing.FRONT)
+                        .maxByOrNull { it.width.toLong() * it.height.toLong() }
+                    if (resolution != null && resolution.height > 0) {
+                        resolution.width.toFloat() / resolution.height.toFloat()
+                    } else 4f / 3f
+                } else 0f
+                val availableAspectRatio = maxWidth.value / maxHeight.value.coerceAtLeast(1f)
+                val previewModifier = if (full && targetAspectRatio > 0f) {
+                    if (availableAspectRatio > targetAspectRatio) {
+                        Modifier.fillMaxHeight().width(maxHeight * targetAspectRatio)
+                    } else {
+                        Modifier.fillMaxWidth().height(maxWidth / targetAspectRatio)
+                    }
+                } else Modifier.fillMaxSize()
+                AndroidView(
                 factory = { context ->
                     SurfaceView(context).apply {
                         holder.addCallback(object : SurfaceHolder.Callback {
@@ -458,10 +509,11 @@ private fun RootEncoderCameraPreview(
                         })
                     }
                 },
-                modifier = Modifier.weight(1f).fillMaxWidth().onSizeChanged { size ->
+                modifier = previewModifier.onSizeChanged { size ->
                     onDisplayedResolutionChanged(formatResolution(size.width, size.height))
                 }
-            )
+                )
+            }
         }
     }
 }
