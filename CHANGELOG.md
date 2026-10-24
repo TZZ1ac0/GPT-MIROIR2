@@ -69,3 +69,4 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ### Ajouté
 - Fondation Android Kotlin / Jetpack Compose.
 - Écran « Hello World! » et tests unitaires.
+- CI GitHub Actions, badges, documentation et automatisation des releases.
