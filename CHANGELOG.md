@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.14.0] - 2026-10-24
+
+### Modifié
+- CameraX : rend le zoom par pincement, le panoramique à deux doigts et le double tap de réinitialisation disponibles que l’option « Full » soit activée ou non.
+
 ## [0.13.0] - 2026-10-24
 
 ### Ajouté
