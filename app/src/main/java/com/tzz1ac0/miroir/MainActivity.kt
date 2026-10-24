@@ -19,6 +19,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.unit.IntSize
@@ -364,9 +366,27 @@ private fun CameraXCameraPreview(
     ) {
         AndroidView(
             factory = { previewView },
-            modifier = Modifier.weight(1f).fillMaxWidth().onSizeChanged { size ->
-                onDisplayedResolutionChanged(formatResolution(size.width, size.height))
-            }
+            modifier = Modifier.weight(1f).fillMaxWidth()
+                .then(
+                    if (full) {
+                        Modifier.pointerInput(boundCamera) {
+                            detectTransformGestures { _, _, zoomChange, _ ->
+                                val zoomState = boundCamera?.cameraInfo?.zoomState?.value
+                                if (zoomState != null && zoomChange != 1f) {
+                                    boundCamera?.cameraControl?.setZoomRatio(
+                                        (zoomState.zoomRatio * zoomChange).coerceIn(
+                                            zoomState.minZoomRatio,
+                                            zoomState.maxZoomRatio
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    } else Modifier
+                )
+                .onSizeChanged { size ->
+                    onDisplayedResolutionChanged(formatResolution(size.width, size.height))
+                }
         )
     }
 
