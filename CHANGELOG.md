@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.9.0] - 2026-10-24
+
+### Modifié
+- Paramètres : organise les informations existantes dans l’onglet « Flux » et ajoute les onglets « CameraX » et « RootEncoder », laissés vides pour l’instant.
+
 ## [0.8.0] - 2026-10-24
 
 ### Corrigé
