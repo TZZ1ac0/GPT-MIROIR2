@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.10.0] - 2026-10-24
+
+### Ajouté
+- CameraX : ajoute l’option « Full » pour afficher l’intégralité du flux d’aperçu sans recadrage, en conservant les proportions et l’exposition automatique ; le zoom revient à 1× lors du changement de mode.
+
 ## [0.9.0] - 2026-10-24
 
 ### Modifié
