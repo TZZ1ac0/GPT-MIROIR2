@@ -30,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -45,6 +46,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -98,6 +100,7 @@ private fun CameraScreen(activity: ComponentActivity) {
     var menuExpanded by remember { mutableStateOf(false) }
     var settingsDialogVisible by remember { mutableStateOf(false) }
     var selectedSettingsTab by rememberSaveable { mutableStateOf(0) }
+    var fullCameraX by rememberSaveable { mutableStateOf(false) }
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
     var displayedImageResolution by remember { mutableStateOf("Indisponible") }
     var availableSurfaceResolution by remember { mutableStateOf("Indisponible") }
@@ -188,6 +191,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                 } else {
                     CameraXCameraPreview(
                         activity = activity,
+                        full = fullCameraX,
                         modifier = Modifier.weight(1f),
                         onStreamResolutionChanged = { videoStreamResolution = it },
                         onDisplayedResolutionChanged = { displayedImageResolution = it },
@@ -274,7 +278,23 @@ private fun CameraScreen(activity: ComponentActivity) {
                                 value = "Taille du conteneur d’aperçu dans Compose"
                             )
                         }
-                        1, 2 -> Unit
+                        1 -> Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Full",
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Checkbox(
+                                    checked = fullCameraX,
+                                    onCheckedChange = { fullCameraX = it }
+                                )
+                            }
+                        }
+                        2 -> Unit
                     }
                 }
             },
@@ -291,6 +311,7 @@ private fun CameraScreen(activity: ComponentActivity) {
 @Composable
 private fun CameraXCameraPreview(
     activity: ComponentActivity,
+    full: Boolean,
     modifier: Modifier = Modifier,
     onStreamResolutionChanged: (String) -> Unit,
     onDisplayedResolutionChanged: (String) -> Unit,
@@ -301,6 +322,15 @@ private fun CameraXCameraPreview(
             scaleType = PreviewView.ScaleType.FILL_CENTER
             implementationMode = PreviewView.ImplementationMode.COMPATIBLE
         }
+    }
+    var boundCamera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
+    LaunchedEffect(full, boundCamera) {
+        previewView.scaleType = if (full) {
+            PreviewView.ScaleType.FIT_CENTER
+        } else {
+            PreviewView.ScaleType.FILL_CENTER
+        }
+        boundCamera?.cameraControl?.setZoomRatio(1f)
     }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
     Column(
@@ -339,7 +369,9 @@ private fun CameraXCameraPreview(
                 val analysis = analysisBuilder.build()
                 analysis.setAnalyzer(analysisExecutor) { image -> image.close() }
                 provider?.unbindAll()
-                provider?.bindToLifecycle(activity, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis)
+                boundCamera = provider?.bindToLifecycle(
+                    activity, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis
+                )
                 preview.resolutionInfo?.resolution?.let { resolution ->
                     onStreamResolutionChanged(formatResolution(resolution.width, resolution.height))
                 }
@@ -350,6 +382,7 @@ private fun CameraXCameraPreview(
         onDispose {
             disposed = true
             provider?.unbindAll()
+            boundCamera = null
             analysisExecutor.shutdown()
         }
     }
