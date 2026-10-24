@@ -83,6 +83,7 @@ import com.pedro.library.generic.GenericStream
 import com.pedro.library.view.RenderErrorCallback
 import com.tzz1ac0.miroir.camera.AutoExposureCameraXSource
 import java.util.concurrent.Executors
+import kotlin.math.pow
 
 
 class MainActivity : ComponentActivity() {
@@ -565,7 +566,7 @@ private fun RootEncoderCameraPreview(
                             context,
                             object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
                                 override fun onScale(detector: ScaleGestureDetector): Boolean {
-                                    gestureZoom = (gestureZoom * (1f + (detector.scaleFactor - 1f) * 1.5f)).coerceIn(1f, 4f)
+                                    gestureZoom = (gestureZoom * detector.scaleFactor.pow(1.5f)).coerceIn(1f, 4f)
                                     applyGestureTransform()
                                     return true
                                 }
@@ -590,21 +591,39 @@ private fun RootEncoderCameraPreview(
                             scaleDetector.onTouchEvent(event)
                             tapDetector.onTouchEvent(event)
 
-                            if (event.pointerCount >= 2) {
+                            if (event.actionMasked == MotionEvent.ACTION_POINTER_UP) {
+                                // Exclude the pointer that is being lifted when resetting the pan anchor.
+                                val remainingCount = event.pointerCount - 1
+                                if (remainingCount >= 2) {
+                                    val liftedIndex = event.actionIndex
+                                    val focusX = (0 until event.pointerCount)
+                                        .filter { it != liftedIndex }
+                                        .map { event.getX(it) }
+                                        .average().toFloat()
+                                    val focusY = (0 until event.pointerCount)
+                                        .filter { it != liftedIndex }
+                                        .map { event.getY(it) }
+                                        .average().toFloat()
+                                    lastFocusX = focusX
+                                    lastFocusY = focusY
+                                } else {
+                                    lastFocusX = 0f
+                                    lastFocusY = 0f
+                                }
+                            } else if (event.pointerCount >= 2) {
                                 val focusX = (0 until event.pointerCount).map { event.getX(it) }.average().toFloat()
                                 val focusY = (0 until event.pointerCount).map { event.getY(it) }.average().toFloat()
                                 if (event.actionMasked == MotionEvent.ACTION_POINTER_DOWN) {
                                     lastFocusX = focusX
                                     lastFocusY = focusY
                                 } else if (event.actionMasked == MotionEvent.ACTION_MOVE && gestureZoom > 1f) {
-                                    panX += (focusX - lastFocusX) * 1.4f
-                                    panY += (focusY - lastFocusY) * 1.4f
+                                    panX += (focusX - lastFocusX) * 2.5f
+                                    panY += (focusY - lastFocusY) * 2.5f
                                     applyGestureTransform()
                                     lastFocusX = focusX
                                     lastFocusY = focusY
                                 }
-                            } else if (event.actionMasked == MotionEvent.ACTION_UP ||
-                                event.actionMasked == MotionEvent.ACTION_POINTER_UP) {
+                            } else if (event.actionMasked == MotionEvent.ACTION_UP) {
                                 lastFocusX = 0f
                                 lastFocusY = 0f
                             }
