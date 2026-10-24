@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.12.0] - 2026-10-24
+
+### Ajouté
+- CameraX : ajoute le zoom par pincement à deux doigts lorsque l’option « Full » est activée, avec respect des limites de zoom de la caméra.
+
 ## [0.11.0] - 2026-10-24
 
 ### Ajouté
