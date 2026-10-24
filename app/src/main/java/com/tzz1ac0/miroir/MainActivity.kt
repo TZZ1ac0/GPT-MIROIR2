@@ -378,46 +378,38 @@ private fun CameraXCameraPreview(
         AndroidView(
             factory = { previewView },
             modifier = Modifier.weight(1f).fillMaxWidth()
-                .then(
-                    if (full) {
-                        Modifier.pointerInput(boundCamera, full) {
-                            detectTransformGestures { _, panChange, zoomChange, _ ->
-                                val zoomState = boundCamera?.cameraInfo?.zoomState?.value
-                                val maxZoom = zoomState?.maxZoomRatio ?: 4f
-                                val minZoom = zoomState?.minZoomRatio ?: 1f
-                                gestureZoom = (gestureZoom * zoomChange).coerceIn(minZoom, maxZoom)
-                                val width = previewView.width.toFloat()
-                                val height = previewView.height.toFloat()
-                                val maxPanX = width * (gestureZoom - 1f) / 2f
-                                val maxPanY = height * (gestureZoom - 1f) / 2f
-                                panX = (panX + panChange.x).coerceIn(-maxPanX, maxPanX)
-                                panY = (panY + panChange.y).coerceIn(-maxPanY, maxPanY)
-                                previewView.scaleX = gestureZoom
-                                previewView.scaleY = gestureZoom
-                                previewView.translationX = panX
-                                previewView.translationY = panY
-                            }
+                .pointerInput(boundCamera) {
+                    detectTransformGestures { _, panChange, zoomChange, _ ->
+                        val zoomState = boundCamera?.cameraInfo?.zoomState?.value
+                        val maxZoom = zoomState?.maxZoomRatio ?: 4f
+                        val minZoom = zoomState?.minZoomRatio ?: 1f
+                        gestureZoom = (gestureZoom * zoomChange).coerceIn(minZoom, maxZoom)
+                        val width = previewView.width.toFloat()
+                        val height = previewView.height.toFloat()
+                        val maxPanX = width * (gestureZoom - 1f) / 2f
+                        val maxPanY = height * (gestureZoom - 1f) / 2f
+                        panX = (panX + panChange.x).coerceIn(-maxPanX, maxPanX)
+                        panY = (panY + panChange.y).coerceIn(-maxPanY, maxPanY)
+                        previewView.scaleX = gestureZoom
+                        previewView.scaleY = gestureZoom
+                        previewView.translationX = panX
+                        previewView.translationY = panY
+                    }
+                }
+                .pointerInput(boundCamera) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            gestureZoom = 1f
+                            panX = 0f
+                            panY = 0f
+                            previewView.scaleX = 1f
+                            previewView.scaleY = 1f
+                            previewView.translationX = 0f
+                            previewView.translationY = 0f
+                            boundCamera?.cameraControl?.setZoomRatio(1f)
                         }
-                    } else Modifier
-                )
-                .then(
-                    if (full) {
-                        Modifier.pointerInput(boundCamera, full) {
-                            detectTapGestures(
-                                onDoubleTap = {
-                                    gestureZoom = 1f
-                                    panX = 0f
-                                    panY = 0f
-                                    previewView.scaleX = 1f
-                                    previewView.scaleY = 1f
-                                    previewView.translationX = 0f
-                                    previewView.translationY = 0f
-                                    boundCamera?.cameraControl?.setZoomRatio(1f)
-                                }
-                            )
-                        }
-                    } else Modifier
-                )
+                    )
+                }
                 .onSizeChanged { size ->
                     onDisplayedResolutionChanged(formatResolution(size.width, size.height))
                 }
