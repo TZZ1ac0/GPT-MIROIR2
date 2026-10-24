@@ -47,6 +47,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,7 +92,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                 PackageManager.PERMISSION_GRANTED
         )
     }
-    var cameraMode by remember { mutableStateOf(CameraMode.DEFAULT) }
+    var cameraMode by rememberSaveable { mutableStateOf(CameraMode.DEFAULT) }
     var menuExpanded by remember { mutableStateOf(false) }
     var settingsDialogVisible by remember { mutableStateOf(false) }
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
