@@ -40,6 +40,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
@@ -95,6 +97,7 @@ private fun CameraScreen(activity: ComponentActivity) {
     var cameraMode by rememberSaveable { mutableStateOf(CameraMode.DEFAULT) }
     var menuExpanded by remember { mutableStateOf(false) }
     var settingsDialogVisible by remember { mutableStateOf(false) }
+    var selectedSettingsTab by rememberSaveable { mutableStateOf(0) }
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
     var displayedImageResolution by remember { mutableStateOf("Indisponible") }
     var availableSurfaceResolution by remember { mutableStateOf("Indisponible") }
@@ -205,50 +208,74 @@ private fun CameraScreen(activity: ComponentActivity) {
             onDismissRequest = { settingsDialogVisible = false },
             title = { Text("Paramètres") },
             text = {
-                Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-                    SettingsRow(
-                        label = "Résolution native du capteur",
-                        value = nativeSensorResolution
-                    )
-                    HorizontalDivider()
-                    SettingsRow(
-                        label = "Source de la résolution native",
-                        value = "Camera2 — SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)"
-                    )
-                    HorizontalDivider()
-                    SettingsRow(
-                        label = "Flux vidéo d’entrée",
-                        value = videoStreamResolution
-                    )
-                    HorizontalDivider()
-                    SettingsRow(
-                        label = "Provenance du flux",
-                        value = if (cameraMode == CameraMode.ROOT_ENCODER) {
-                            "RootEncoder — GenericStream.prepareVideo (640 × 480 px, proportion 4/3), source AutoExposureCameraXSource"
-                        } else {
-                            "CameraX — Preview.resolutionInfo (résolution négociée avec la caméra)"
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    TabRow(selectedTabIndex = selectedSettingsTab) {
+                        Tab(
+                            selected = selectedSettingsTab == 0,
+                            onClick = { selectedSettingsTab = 0 },
+                            text = { Text("Flux") }
+                        )
+                        Tab(
+                            selected = selectedSettingsTab == 1,
+                            onClick = { selectedSettingsTab = 1 },
+                            text = { Text("CameraX") }
+                        )
+                        Tab(
+                            selected = selectedSettingsTab == 2,
+                            onClick = { selectedSettingsTab = 2 },
+                            text = { Text("RootEncoder") }
+                        )
+                    }
+                    when (selectedSettingsTab) {
+                        0 -> Column(
+                            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                        ) {
+                            SettingsRow(
+                                label = "Résolution native du capteur",
+                                value = nativeSensorResolution
+                            )
+                            HorizontalDivider()
+                            SettingsRow(
+                                label = "Source de la résolution native",
+                                value = "Camera2 — SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)"
+                            )
+                            HorizontalDivider()
+                            SettingsRow(
+                                label = "Flux vidéo d’entrée",
+                                value = videoStreamResolution
+                            )
+                            HorizontalDivider()
+                            SettingsRow(
+                                label = "Provenance du flux",
+                                value = if (cameraMode == CameraMode.ROOT_ENCODER) {
+                                    "RootEncoder — GenericStream.prepareVideo (640 × 480 px, proportion 4/3), source AutoExposureCameraXSource"
+                                } else {
+                                    "CameraX — Preview.resolutionInfo (résolution négociée avec la caméra)"
+                                }
+                            )
+                            HorizontalDivider()
+                            SettingsRow(
+                                label = "Image affichée",
+                                value = displayedImageResolution
+                            )
+                            HorizontalDivider()
+                            SettingsRow(
+                                label = "Mesure de l’image",
+                                value = "Taille du composant AndroidView dans Compose"
+                            )
+                            HorizontalDivider()
+                            SettingsRow(
+                                label = "Surface d’affichage disponible",
+                                value = availableSurfaceResolution
+                            )
+                            HorizontalDivider()
+                            SettingsRow(
+                                label = "Mesure de la surface",
+                                value = "Taille du conteneur d’aperçu dans Compose"
+                            )
                         }
-                    )
-                    HorizontalDivider()
-                    SettingsRow(
-                        label = "Image affichée",
-                        value = displayedImageResolution
-                    )
-                    HorizontalDivider()
-                    SettingsRow(
-                        label = "Mesure de l’image",
-                        value = "Taille du composant AndroidView dans Compose"
-                    )
-                    HorizontalDivider()
-                    SettingsRow(
-                        label = "Surface d’affichage disponible",
-                        value = availableSurfaceResolution
-                    )
-                    HorizontalDivider()
-                    SettingsRow(
-                        label = "Mesure de la surface",
-                        value = "Taille du conteneur d’aperçu dans Compose"
-                    )
+                        1, 2 -> Unit
+                    }
                 }
             },
             confirmButton = {
