@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.15.0] - 2026-10-24
+
+### Ajouté
+- RootEncoder : ajoute le zoom gestuel par pincement, le panoramique à deux doigts et la réinitialisation par double tap, indépendamment de l’option « Full ».
+
 ## [0.14.0] - 2026-10-24
 
 ### Modifié

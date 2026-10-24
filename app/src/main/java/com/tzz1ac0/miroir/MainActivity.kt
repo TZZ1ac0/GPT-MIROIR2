@@ -7,6 +7,9 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Bundle
 import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.activity.ComponentActivity
@@ -540,6 +543,74 @@ private fun RootEncoderCameraPreview(
                 AndroidView(
                 factory = { context ->
                     SurfaceView(context).apply {
+                        val preview = this
+                        var gestureZoom = 1f
+                        var panX = 0f
+                        var panY = 0f
+                        var lastFocusX = 0f
+                        var lastFocusY = 0f
+
+                        fun applyGestureTransform() {
+                            val maxPanX = preview.width * (gestureZoom - 1f) / 2f
+                            val maxPanY = preview.height * (gestureZoom - 1f) / 2f
+                            panX = panX.coerceIn(-maxPanX, maxPanX)
+                            panY = panY.coerceIn(-maxPanY, maxPanY)
+                            preview.scaleX = gestureZoom
+                            preview.scaleY = gestureZoom
+                            preview.translationX = panX
+                            preview.translationY = panY
+                        }
+
+                        val scaleDetector = ScaleGestureDetector(
+                            context,
+                            object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                                    gestureZoom = (gestureZoom * detector.scaleFactor).coerceIn(1f, 4f)
+                                    applyGestureTransform()
+                                    return true
+                                }
+                            }
+                        )
+                        val tapDetector = GestureDetector(
+                            context,
+                            object : GestureDetector.SimpleOnGestureListener() {
+                                override fun onDown(event: MotionEvent): Boolean = true
+
+                                override fun onDoubleTap(event: MotionEvent): Boolean {
+                                    gestureZoom = 1f
+                                    panX = 0f
+                                    panY = 0f
+                                    applyGestureTransform()
+                                    return true
+                                }
+                            }
+                        )
+
+                        setOnTouchListener { _, event ->
+                            scaleDetector.onTouchEvent(event)
+                            tapDetector.onTouchEvent(event)
+
+                            if (event.pointerCount >= 2) {
+                                val focusX = (0 until event.pointerCount).map { event.getX(it) }.average().toFloat()
+                                val focusY = (0 until event.pointerCount).map { event.getY(it) }.average().toFloat()
+                                if (event.actionMasked == MotionEvent.ACTION_POINTER_DOWN) {
+                                    lastFocusX = focusX
+                                    lastFocusY = focusY
+                                } else if (event.actionMasked == MotionEvent.ACTION_MOVE && gestureZoom > 1f) {
+                                    panX += focusX - lastFocusX
+                                    panY += focusY - lastFocusY
+                                    applyGestureTransform()
+                                    lastFocusX = focusX
+                                    lastFocusY = focusY
+                                }
+                            } else if (event.actionMasked == MotionEvent.ACTION_UP ||
+                                event.actionMasked == MotionEvent.ACTION_POINTER_UP) {
+                                lastFocusX = 0f
+                                lastFocusY = 0f
+                            }
+                            true
+                        }
+
                         holder.addCallback(object : SurfaceHolder.Callback {
                             override fun surfaceCreated(holder: SurfaceHolder) {
                                 try {
