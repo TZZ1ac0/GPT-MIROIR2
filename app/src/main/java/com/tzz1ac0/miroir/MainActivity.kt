@@ -19,6 +19,8 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -64,6 +66,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.unit.IntSize
@@ -348,12 +351,22 @@ private fun CameraXCameraPreview(
         }
     }
     var boundCamera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
+    var gestureZoom by remember { mutableStateOf(1f) }
+    var panX by remember { mutableStateOf(0f) }
+    var panY by remember { mutableStateOf(0f) }
     LaunchedEffect(full, boundCamera) {
         previewView.scaleType = if (full) {
             PreviewView.ScaleType.FIT_CENTER
         } else {
             PreviewView.ScaleType.FILL_CENTER
         }
+        gestureZoom = 1f
+        panX = 0f
+        panY = 0f
+        previewView.scaleX = 1f
+        previewView.scaleY = 1f
+        previewView.translationX = 0f
+        previewView.translationY = 0f
         boundCamera?.cameraControl?.setZoomRatio(1f)
     }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
@@ -364,9 +377,42 @@ private fun CameraXCameraPreview(
     ) {
         AndroidView(
             factory = { previewView },
-            modifier = Modifier.weight(1f).fillMaxWidth().onSizeChanged { size ->
-                onDisplayedResolutionChanged(formatResolution(size.width, size.height))
-            }
+            modifier = Modifier.weight(1f).fillMaxWidth()
+                .pointerInput(boundCamera) {
+                    detectTransformGestures { _, panChange, zoomChange, _ ->
+                        val zoomState = boundCamera?.cameraInfo?.zoomState?.value
+                        val maxZoom = zoomState?.maxZoomRatio ?: 4f
+                        val minZoom = zoomState?.minZoomRatio ?: 1f
+                        gestureZoom = (gestureZoom * zoomChange).coerceIn(minZoom, maxZoom)
+                        val width = previewView.width.toFloat()
+                        val height = previewView.height.toFloat()
+                        val maxPanX = width * (gestureZoom - 1f) / 2f
+                        val maxPanY = height * (gestureZoom - 1f) / 2f
+                        panX = (panX + panChange.x).coerceIn(-maxPanX, maxPanX)
+                        panY = (panY + panChange.y).coerceIn(-maxPanY, maxPanY)
+                        previewView.scaleX = gestureZoom
+                        previewView.scaleY = gestureZoom
+                        previewView.translationX = panX
+                        previewView.translationY = panY
+                    }
+                }
+                .pointerInput(boundCamera) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            gestureZoom = 1f
+                            panX = 0f
+                            panY = 0f
+                            previewView.scaleX = 1f
+                            previewView.scaleY = 1f
+                            previewView.translationX = 0f
+                            previewView.translationY = 0f
+                            boundCamera?.cameraControl?.setZoomRatio(1f)
+                        }
+                    )
+                }
+                .onSizeChanged { size ->
+                    onDisplayedResolutionChanged(formatResolution(size.width, size.height))
+                }
         )
     }
 
