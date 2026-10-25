@@ -122,6 +122,7 @@ private fun CameraScreen(activity: ComponentActivity) {
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.height(48.dp),
                 title = {
                     Text(
                         text = buildAnnotatedString {
@@ -186,8 +187,8 @@ private fun CameraScreen(activity: ComponentActivity) {
         }
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             if (hasCameraPermission) {
                 if (cameraMode == CameraMode.ROOT_ENCODER) {
@@ -547,7 +548,7 @@ private fun RootEncoderCameraPreview(
     ) {
         if (prepared) {
             BoxWithConstraints(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier.weight(1f).fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 val targetAspectRatio = if (full) {
