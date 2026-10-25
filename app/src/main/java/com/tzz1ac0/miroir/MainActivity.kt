@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -125,6 +126,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                 modifier = Modifier.height(48.dp),
                 title = {
                     Text(
+                        modifier = Modifier.fillMaxHeight().wrapContentHeight(Alignment.CenterVertically),
                         text = buildAnnotatedString {
                             append("Miroir — ")
                             withStyle(
