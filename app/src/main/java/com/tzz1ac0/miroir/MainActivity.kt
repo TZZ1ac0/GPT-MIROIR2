@@ -470,9 +470,11 @@ private fun RootEncoderCameraPreview(
     onSurfaceResolutionChanged: (String) -> Unit
 ) {
     var prepared by remember { mutableStateOf(false) }
-    var gestureZoom by remember { mutableStateOf(1f) }
-    var panX by remember { mutableStateOf(0f) }
-    var panY by remember { mutableStateOf(0f) }
+    // Save the crop state across Activity recreation (including device rotation).
+    // Pan values are normalized texture offsets, so they remain independent of view size.
+    var gestureZoom by rememberSaveable { mutableStateOf(1f) }
+    var panX by rememberSaveable { mutableStateOf(0f) }
+    var panY by rememberSaveable { mutableStateOf(0f) }
     val source = remember { AutoExposureCameraXSource(activity.applicationContext) }
     val stream = remember {
         GenericStream(
