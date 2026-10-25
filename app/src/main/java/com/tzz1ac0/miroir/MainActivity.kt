@@ -425,6 +425,13 @@ private fun CameraXCameraPreview(
                 }
                 .onSizeChanged { size ->
                     onDisplayedResolutionChanged(formatResolution(size.width, size.height))
+                    // Reapply the saved normalized framing when the preview gets its new size.
+                    val maxPanX = size.width * (gestureZoom - 1f) / 2f
+                    val maxPanY = size.height * (gestureZoom - 1f) / 2f
+                    previewView.scaleX = gestureZoom
+                    previewView.scaleY = gestureZoom
+                    previewView.translationX = panX * maxPanX
+                    previewView.translationY = panY * maxPanY
                 }
         )
     }
