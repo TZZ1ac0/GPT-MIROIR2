@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.5] - 2026-10-25
+
+### Corrigé
+- Aligne RootEncoder sur la version 2.7.2 utilisée par RTSP-Server 1.4.1 afin d’éviter le `NoSuchMethodError` lors de la connexion d’un client RTSP.
+
 ## [1.0.4] - 2026-10-25
 
 ### Corrigé
