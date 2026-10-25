@@ -79,6 +79,7 @@ import com.pedro.encoder.input.video.CameraHelper
 import com.pedro.library.generic.GenericStream
 import com.pedro.library.view.RenderErrorCallback
 import com.tzz1ac0.miroir.camera.AutoExposureCameraXSource
+import com.tzz1ac0.miroir.camera.PanFilterRender
 import java.util.concurrent.Executors
 
 
@@ -470,6 +471,8 @@ private fun RootEncoderCameraPreview(
 ) {
     var prepared by remember { mutableStateOf(false) }
     var gestureZoom by remember { mutableStateOf(1f) }
+    var panX by remember { mutableStateOf(0f) }
+    var panY by remember { mutableStateOf(0f) }
     val source = remember { AutoExposureCameraXSource(activity.applicationContext) }
     val stream = remember {
         GenericStream(
@@ -487,6 +490,7 @@ private fun RootEncoderCameraPreview(
             NoAudioSource()
         )
     }
+    val panFilter = remember(stream) { PanFilterRender() }
     DisposableEffect(stream, source, full) {
         try {
             if (full) {
@@ -502,6 +506,8 @@ private fun RootEncoderCameraPreview(
             })
             stream.getGlInterface().autoHandleOrientation = true
             prepared = stream.prepareVideo(width = 640, height = 480, bitrate = 1_200_000, fps = 30)
+            if (prepared) stream.getGlInterface().setFilter(panFilter)
+            panFilter.setPan(panX, panY)
             onStreamResolutionChanged(if (prepared) formatResolution(640, 480) else "Indisponible")
         } catch (error: Exception) {
             prepared = false
@@ -557,22 +563,32 @@ private fun RootEncoderCameraPreview(
                     }
                 },
                 modifier = previewModifier
-                    .pointerInput(source, prepared) {
-                        detectTransformGestures { _, _, zoomChange, _ ->
+                    .pointerInput(source, prepared, panFilter) {
+                        detectTransformGestures { _, panChange, zoomChange, _ ->
                             if (prepared) {
                                 val zoomRange = source.getZoomRange()
                                 val minZoom = if (zoomRange.lower > 0f) zoomRange.lower else 1f
                                 val maxZoom = if (zoomRange.upper >= minZoom) zoomRange.upper else 4f
                                 gestureZoom = (gestureZoom * zoomChange).coerceIn(minZoom, maxZoom)
                                 source.setZoom(gestureZoom)
+
+                                val width = size.width.toFloat().coerceAtLeast(1f)
+                                val height = size.height.toFloat().coerceAtLeast(1f)
+                                val maxPan = 0.5f * (1f - 1f / gestureZoom)
+                                panX = (panX - panChange.x / width).coerceIn(-maxPan, maxPan)
+                                panY = (panY + panChange.y / height).coerceIn(-maxPan, maxPan)
+                                panFilter.setPan(panX, panY)
                             }
                         }
                     }
-                    .pointerInput(source, prepared) {
+                    .pointerInput(source, prepared, panFilter) {
                         detectTapGestures(
                             onDoubleTap = {
                                 gestureZoom = 1f
+                                panX = 0f
+                                panY = 0f
                                 source.setZoom(1f)
+                                panFilter.setPan(0f, 0f)
                             }
                         )
                     }

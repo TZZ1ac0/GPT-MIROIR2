@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.16.0] - 2026-10-25
+
+### Ajouté
+- RootEncoder : ajoute le panoramique gestuel dans le pipeline OpenGL de rendu, en amont de l’aperçu et de l’encodage, avec limites liées au zoom ; le double tap réinitialise le zoom et le panoramique.
+
 ## [0.15.0] - 2026-10-24
 
 ### Modifié
