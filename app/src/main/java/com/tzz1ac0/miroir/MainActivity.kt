@@ -352,23 +352,36 @@ private fun CameraXCameraPreview(
         }
     }
     var boundCamera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
-    var gestureZoom by remember { mutableStateOf(1f) }
-    var panX by remember { mutableStateOf(0f) }
-    var panY by remember { mutableStateOf(0f) }
-    LaunchedEffect(full, boundCamera) {
+    // Keep zoom and normalized pan offsets across Activity recreation (device rotation).
+    // Pan is stored as a fraction of the available translation, not as screen pixels.
+    var gestureZoom by rememberSaveable { mutableStateOf(1f) }
+    var panX by rememberSaveable { mutableStateOf(0f) }
+    var panY by rememberSaveable { mutableStateOf(0f) }
+    var previousFull by rememberSaveable { mutableStateOf(full) }
+
+    LaunchedEffect(full) {
         previewView.scaleType = if (full) {
             PreviewView.ScaleType.FIT_CENTER
         } else {
             PreviewView.ScaleType.FILL_CENTER
         }
-        gestureZoom = 1f
-        panX = 0f
-        panY = 0f
-        previewView.scaleX = 1f
-        previewView.scaleY = 1f
-        previewView.translationX = 0f
-        previewView.translationY = 0f
-        boundCamera?.cameraControl?.setZoomRatio(1f)
+        // Changing the display mode intentionally resets framing, but Activity recreation
+        // with the same mode must restore the saved framing.
+        if (previousFull != full) {
+            gestureZoom = 1f
+            panX = 0f
+            panY = 0f
+            boundCamera?.cameraControl?.setZoomRatio(1f)
+            previousFull = full
+        }
+    }
+    LaunchedEffect(gestureZoom, panX, panY) {
+        val maxPanX = previewView.width * (gestureZoom - 1f) / 2f
+        val maxPanY = previewView.height * (gestureZoom - 1f) / 2f
+        previewView.scaleX = gestureZoom
+        previewView.scaleY = gestureZoom
+        previewView.translationX = panX * maxPanX
+        previewView.translationY = panY * maxPanY
     }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
     Column(
@@ -384,17 +397,16 @@ private fun CameraXCameraPreview(
                         val zoomState = boundCamera?.cameraInfo?.zoomState?.value
                         val maxZoom = zoomState?.maxZoomRatio ?: 4f
                         val minZoom = zoomState?.minZoomRatio ?: 1f
-                        gestureZoom = (gestureZoom * zoomChange).coerceIn(minZoom, maxZoom)
-                        val width = previewView.width.toFloat()
-                        val height = previewView.height.toFloat()
-                        val maxPanX = width * (gestureZoom - 1f) / 2f
-                        val maxPanY = height * (gestureZoom - 1f) / 2f
-                        panX = (panX + panChange.x).coerceIn(-maxPanX, maxPanX)
-                        panY = (panY + panChange.y).coerceIn(-maxPanY, maxPanY)
-                        previewView.scaleX = gestureZoom
-                        previewView.scaleY = gestureZoom
-                        previewView.translationX = panX
-                        previewView.translationY = panY
+                        val nextZoom = (gestureZoom * zoomChange).coerceIn(minZoom, maxZoom)
+                        val maxPanX = previewView.width * (nextZoom - 1f) / 2f
+                        val maxPanY = previewView.height * (nextZoom - 1f) / 2f
+                        gestureZoom = nextZoom
+                        panX = if (maxPanX > 0f) {
+                            (panX + panChange.x / maxPanX).coerceIn(-1f, 1f)
+                        } else 0f
+                        panY = if (maxPanY > 0f) {
+                            (panY + panChange.y / maxPanY).coerceIn(-1f, 1f)
+                        } else 0f
                     }
                 }
                 .pointerInput(boundCamera) {

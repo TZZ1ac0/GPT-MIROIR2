@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.19.0] - 2026-10-25
+
+### Corrigé
+- CameraX et RootEncoder : mémorisent le niveau de zoom et le centre du recadrage lors d’une recréation de l’activité, notamment pendant la rotation du smartphone. CameraX conserve le panoramique sous forme normalisée pour l’adapter aux nouvelles dimensions de l’aperçu.
+
 ## [0.18.0] - 2026-10-25
 
 ### Corrigé
