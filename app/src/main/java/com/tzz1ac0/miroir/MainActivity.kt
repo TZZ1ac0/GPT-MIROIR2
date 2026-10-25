@@ -206,7 +206,7 @@ private fun CameraScreen(activity: ComponentActivity) {
         ) {
             if (hasCameraPermission) {
                 if (cameraMode == CameraMode.ROOT_ENCODER) {
-                    key(fullRootEncoder, rtspEnabled, rtspPort) {
+                    key(fullRootEncoder, rtspPort) {
                         RootEncoderCameraPreview(
                             activity = activity,
                             full = fullRootEncoder,
@@ -650,11 +650,14 @@ private fun RootEncoderCameraPreview(
         if (!prepared || !rtspEnabled) {
             if (stream.isStreaming) stream.stopStream()
             onRtspServerStateChanged(false)
+        } else if (stream.isStreaming) {
+            // The stream may already have been started by an earlier effect pass.
+            onRtspServerStateChanged(true)
         } else {
             try {
                 stream.startStream()
                 onRtspServerStateChanged(stream.isStreaming)
-                Log.i("MiroirCamera", "Démarrage RTSP demandé sur le port $rtspPort")
+                Log.i("MiroirCamera", "Serveur RTSP démarré sur le port $rtspPort")
             } catch (error: Exception) {
                 onRtspServerStateChanged(false)
                 Log.e("MiroirCamera", "Échec de démarrage du serveur RTSP sur le port $rtspPort", error)
