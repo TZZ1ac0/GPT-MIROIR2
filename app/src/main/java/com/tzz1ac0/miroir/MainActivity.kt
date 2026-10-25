@@ -507,7 +507,7 @@ private fun RootEncoderCameraPreview(
             stream.getGlInterface().autoHandleOrientation = true
             prepared = stream.prepareVideo(width = 640, height = 480, bitrate = 1_200_000, fps = 30)
             if (prepared) stream.getGlInterface().setFilter(panFilter)
-            panFilter.setPan(panX, panY)
+            panFilter.setTransform(gestureZoom, panX, panY)
             onStreamResolutionChanged(if (prepared) formatResolution(640, 480) else "Indisponible")
         } catch (error: Exception) {
             prepared = false
