@@ -602,7 +602,6 @@ private fun RootEncoderCameraPreview(
                 override fun onDisconnect() {}
                 override fun onAuthError() {}
                 override fun onAuthSuccess() {}
-                override fun onStreamingStats(report: com.pedro.common.StreamingStatsReport) {}
             },
             source,
             NoAudioSource()
