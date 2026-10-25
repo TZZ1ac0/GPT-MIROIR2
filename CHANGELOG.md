@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-10-25
+
+### Corrigé
+- Prépare explicitement l’encodeur audio sans source audio afin d’éviter l’échec `AudioEncoder not prepared yet` au démarrage RTSP.
+- Sépare l’activation RTSP du cycle de vie de l’aperçu pour éviter de libérer puis réutiliser la même instance RootEncoder lors du changement de l’option.
+
 ## [1.0.2] - 2026-10-25
 
 ### Corrigé
