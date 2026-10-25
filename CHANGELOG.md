@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2] - 2026-10-25
+
+### Corrigé
+- Maintient l’aperçu local RootEncoder disponible si le démarrage du serveur RTSP échoue, journalise les erreurs de démarrage et synchronise la surface d’aperçu avec le rendu GL.
+
 ## [1.0.1] - 2026-10-25
 
 ### Corrigé
