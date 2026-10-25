@@ -22,6 +22,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,6 +66,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
@@ -215,9 +217,23 @@ private fun CameraScreen(activity: ComponentActivity) {
                     )
                 }
             } else {
-                Text("L’autorisation caméra est nécessaire pour démarrer la capture.")
-                Button(onClick = { permissionRequest.launch(Manifest.permission.CAMERA) }) {
-                    Text("Autoriser la caméra")
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
+                    ) {
+                        Text(
+                            text = "L’autorisation caméra est nécessaire pour démarrer la capture.",
+                            textAlign = TextAlign.Center
+                        )
+                        Button(onClick = { permissionRequest.launch(Manifest.permission.CAMERA) }) {
+                            Text("Autoriser la caméra")
+                        }
+                    }
                 }
             }
         }
