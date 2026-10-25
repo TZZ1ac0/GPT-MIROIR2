@@ -2,6 +2,17 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.21.0] - 2026-10-25
+
+### Amélioré
+- Centre au milieu de l’écran le message initial d’autorisation de la caméra et son bouton.
+
+## [0.20.0] - 2026-10-25
+
+### Amélioré
+- Réduit la hauteur de la barre de titre tout en conservant le titre et le menu visibles.
+- Agrandit la zone d’aperçu en réduisant les marges et en faisant occuper à RootEncoder tout l’espace disponible.
+
 ## [0.19.0] - 2026-10-25
 
 ### Corrigé
