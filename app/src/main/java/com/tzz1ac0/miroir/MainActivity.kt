@@ -39,6 +39,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -68,6 +69,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material.icons.Icons
@@ -79,7 +82,7 @@ import androidx.core.content.ContextCompat
 import com.pedro.common.ConnectChecker
 import com.pedro.encoder.input.sources.audio.NoAudioSource
 import com.pedro.encoder.input.video.CameraHelper
-import com.pedro.library.generic.GenericStream
+import com.pedro.rtspserver.RtspServerStream
 import com.pedro.library.view.RenderErrorCallback
 import com.tzz1ac0.miroir.camera.AutoExposureCameraXSource
 import com.tzz1ac0.miroir.camera.PanFilterRender
@@ -114,6 +117,10 @@ private fun CameraScreen(activity: ComponentActivity) {
     var selectedSettingsTab by rememberSaveable { mutableStateOf(0) }
     var fullCameraX by rememberSaveable { mutableStateOf(false) }
     var fullRootEncoder by rememberSaveable { mutableStateOf(false) }
+    var rtspEnabled by rememberSaveable { mutableStateOf(false) }
+    var rtspPortText by rememberSaveable { mutableStateOf("8554") }
+    var rtspServerRunning by remember { mutableStateOf(false) }
+    val rtspPort = rtspPortText.toIntOrNull()?.takeIf { it in 1..65535 }
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
     var displayedImageResolution by remember { mutableStateOf("Indisponible") }
     var availableSurfaceResolution by remember { mutableStateOf("Indisponible") }
@@ -138,6 +145,9 @@ private fun CameraScreen(activity: ComponentActivity) {
                                 )
                             ) {
                                 append(cameraMode.title)
+                            if (cameraMode == CameraMode.ROOT_ENCODER && rtspServerRunning) {
+                                append(" · RTSP")
+                            }
                             }
                         }
                     )
@@ -196,14 +206,17 @@ private fun CameraScreen(activity: ComponentActivity) {
         ) {
             if (hasCameraPermission) {
                 if (cameraMode == CameraMode.ROOT_ENCODER) {
-                    key(fullRootEncoder) {
+                    key(fullRootEncoder, rtspEnabled, rtspPort) {
                         RootEncoderCameraPreview(
                             activity = activity,
                             full = fullRootEncoder,
+                            rtspEnabled = rtspEnabled && rtspPort != null,
+                            rtspPort = rtspPort ?: 8554,
                             modifier = Modifier.weight(1f),
-                        onStreamResolutionChanged = { videoStreamResolution = it },
-                        onDisplayedResolutionChanged = { displayedImageResolution = it },
-                            onSurfaceResolutionChanged = { availableSurfaceResolution = it }
+                            onStreamResolutionChanged = { videoStreamResolution = it },
+                            onDisplayedResolutionChanged = { displayedImageResolution = it },
+                            onSurfaceResolutionChanged = { availableSurfaceResolution = it },
+                            onRtspServerStateChanged = { rtspServerRunning = it }
                         )
                     }
                 } else {
@@ -260,6 +273,11 @@ private fun CameraScreen(activity: ComponentActivity) {
                             selected = selectedSettingsTab == 2,
                             onClick = { selectedSettingsTab = 2 },
                             text = { Text("RootEncoder") }
+                        )
+                        Tab(
+                            selected = selectedSettingsTab == 3,
+                            onClick = { selectedSettingsTab = 3 },
+                            text = { Text("RTSP") }
                         )
                     }
                     when (selectedSettingsTab) {
@@ -341,6 +359,62 @@ private fun CameraScreen(activity: ComponentActivity) {
                                     onCheckedChange = { fullRootEncoder = it }
                                 )
                             }
+                        }
+                        3 -> Column(
+                            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Serveur RTSP",
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Checkbox(
+                                    checked = rtspEnabled,
+                                    onCheckedChange = { enabled ->
+                                        if (!enabled || rtspPort != null) rtspEnabled = enabled
+                                    }
+                                )
+                            }
+                            OutlinedTextField(
+                                value = rtspPortText,
+                                onValueChange = { value ->
+                                    if (value.length <= 5 && value.all { it.isDigit() }) {
+                                        rtspPortText = value
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Port RTSP") },
+                                singleLine = true,
+                                enabled = !rtspEnabled,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                isError = rtspPort == null
+                            )
+                            if (rtspPort == null) {
+                                Text(
+                                    text = "Saisissez un port compris entre 1 et 65535.",
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Text(
+                                text = "Exemple de commande VLC",
+                                modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            Text(
+                                text = rtspPort?.let { "vlc rtsp://<IP_DU_TÉLÉPHONE>:$it/" }
+                                    ?: "Le port doit être compris entre 1 et 65535.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "Le serveur est disponible uniquement en mode RootEncoder. L’adresse IP doit être celle du téléphone sur le réseau local.",
+                                modifier = Modifier.padding(top = 8.dp),
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     }
                 }
@@ -502,10 +576,13 @@ private fun CameraXCameraPreview(
 private fun RootEncoderCameraPreview(
     activity: ComponentActivity,
     full: Boolean,
+    rtspEnabled: Boolean,
+    rtspPort: Int,
     modifier: Modifier = Modifier,
     onStreamResolutionChanged: (String) -> Unit,
     onDisplayedResolutionChanged: (String) -> Unit,
-    onSurfaceResolutionChanged: (String) -> Unit
+    onSurfaceResolutionChanged: (String) -> Unit,
+    onRtspServerStateChanged: (Boolean) -> Unit
 ) {
     var prepared by remember { mutableStateOf(false) }
     // Save the crop state across Activity recreation (including device rotation).
@@ -515,8 +592,9 @@ private fun RootEncoderCameraPreview(
     var panY by rememberSaveable { mutableStateOf(0f) }
     val source = remember { AutoExposureCameraXSource(activity.applicationContext) }
     val stream = remember {
-        GenericStream(
+        RtspServerStream(
             activity.applicationContext,
+            rtspPort,
             object : ConnectChecker {
                 override fun onConnectionStarted(url: String) {}
                 override fun onConnectionSuccess() {}
@@ -531,7 +609,7 @@ private fun RootEncoderCameraPreview(
         )
     }
     val panFilter = remember(stream) { PanFilterRender() }
-    DisposableEffect(stream, source, full) {
+    DisposableEffect(stream, source, full, rtspEnabled, rtspPort) {
         try {
             if (full) {
                 val largestResolution = source.getCameraResolutions(CameraHelper.Facing.FRONT)
@@ -548,12 +626,21 @@ private fun RootEncoderCameraPreview(
             prepared = stream.prepareVideo(width = 640, height = 480, bitrate = 1_200_000, fps = 30)
             if (prepared) stream.getGlInterface().setFilter(panFilter)
             panFilter.setTransform(gestureZoom, panX, panY)
+            if (prepared && rtspEnabled) {
+                stream.startStream()
+                onRtspServerStateChanged(true)
+            } else {
+                onRtspServerStateChanged(false)
+            }
             onStreamResolutionChanged(if (prepared) formatResolution(640, 480) else "Indisponible")
         } catch (error: Exception) {
             prepared = false
+            onRtspServerStateChanged(false)
             Log.e("MiroirCamera", "Échec de préparation de RootEncoder", error)
         }
         onDispose {
+            onRtspServerStateChanged(false)
+            if (stream.isStreaming) stream.stopStream()
             if (stream.isOnPreview) stream.stopPreview()
             stream.release()
         }
