@@ -2,6 +2,21 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.17.0] - 2026-10-25
+
+### Corrigé
+- RootEncoder : déplace zoom et panoramique dans le même filtre OpenGL ; le recadrage UV reste dans une fenêtre valide pour éviter les bandes striées aux bords.
+
+## [0.16.0] - 2026-10-25
+
+### Ajouté
+- RootEncoder : ajoute le panoramique gestuel dans le pipeline OpenGL de rendu, en amont de l’aperçu et de l’encodage, avec limites liées au zoom ; le double tap réinitialise le zoom et le panoramique.
+
+## [0.15.0] - 2026-10-24
+
+### Modifié
+- RootEncoder : le pincement et le double tap pilotent désormais le zoom de la caméra via CameraX, au lieu de transformer la vue d’aperçu ; le zoom s’applique ainsi à l’image capturée et au flux encodé. Le panoramique gestuel est volontairement laissé de côté dans cette première étape afin de valider séparément le zoom sans transformation de l’aperçu.
+
 ## [0.14.0] - 2026-10-24
 
 ### Modifié
