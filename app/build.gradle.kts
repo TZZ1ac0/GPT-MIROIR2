@@ -54,7 +54,7 @@ dependencies {
     val rootEncoderVersion = "2.8.1"
     implementation("com.github.pedroSG94.RootEncoder:library:$rootEncoderVersion")
     implementation("com.github.pedroSG94.RootEncoder:extra-sources:$rootEncoderVersion")
-    // RTSP-Server 1.4.2 is the selected version compatible with the RootEncoder 2.8.x line.
+    // RTSP-Server 1.4.1 is the latest verified version compatible with compileSdk 36.
     implementation("com.github.pedroSG94:RTSP-Server:1.4.2")
     implementation("com.google.guava:guava:33.3.1-android")
     implementation("androidx.camera:camera-camera2:$cameraXVersion")

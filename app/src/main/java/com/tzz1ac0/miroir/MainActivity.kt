@@ -144,10 +144,10 @@ private fun CameraScreen(activity: ComponentActivity) {
                                     fontStyle = FontStyle.Italic
                                 )
                             ) {
-                                append(cameraMode.title)
+                                    append(cameraMode.title)
+                            }
                             if (cameraMode == CameraMode.ROOT_ENCODER && rtspServerRunning) {
                                 append(" · RTSP")
-                            }
                             }
                         }
                     )
