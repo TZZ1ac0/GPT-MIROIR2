@@ -624,19 +624,29 @@ private fun RootEncoderCameraPreview(
             })
             stream.getGlInterface().autoHandleOrientation = true
             prepared = stream.prepareVideo(width = 640, height = 480, bitrate = 1_200_000, fps = 30)
-            if (prepared) stream.getGlInterface().setFilter(panFilter)
-            panFilter.setTransform(gestureZoom, panX, panY)
-            if (prepared && rtspEnabled) {
-                stream.startStream()
-                onRtspServerStateChanged(true)
-            } else {
-                onRtspServerStateChanged(false)
+            if (prepared) {
+                stream.getGlInterface().setFilter(panFilter)
+                panFilter.setTransform(gestureZoom, panX, panY)
             }
             onStreamResolutionChanged(if (prepared) formatResolution(640, 480) else "Indisponible")
         } catch (error: Exception) {
             prepared = false
-            onRtspServerStateChanged(false)
             Log.e("MiroirCamera", "Échec de préparation de RootEncoder", error)
+        }
+
+        // Keep the local preview independent from RTSP server startup: a bind/start
+        // failure must not hide the camera image.
+        if (prepared && rtspEnabled) {
+            try {
+                stream.startStream()
+                onRtspServerStateChanged(stream.isStreaming)
+                Log.i("MiroirCamera", "Démarrage RTSP demandé sur le port $rtspPort")
+            } catch (error: Exception) {
+                onRtspServerStateChanged(false)
+                Log.e("MiroirCamera", "Échec de démarrage du serveur RTSP sur le port $rtspPort", error)
+            }
+        } else {
+            onRtspServerStateChanged(false)
         }
         onDispose {
             onRtspServerStateChanged(false)
@@ -683,8 +693,10 @@ private fun RootEncoderCameraPreview(
                                 }
                             }
                             override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+                                stream.getGlInterface().setPreviewResolution(width, height)
                             }
                             override fun surfaceDestroyed(holder: SurfaceHolder) {
+                                if (stream.isOnPreview) stream.stopPreview()
                             }
                         })
                     }
