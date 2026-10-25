@@ -570,14 +570,15 @@ private fun RootEncoderCameraPreview(
                                 val minZoom = if (zoomRange.lower > 0f) zoomRange.lower else 1f
                                 val maxZoom = if (zoomRange.upper >= minZoom) zoomRange.upper else 4f
                                 gestureZoom = (gestureZoom * zoomChange).coerceIn(minZoom, maxZoom)
-                                source.setZoom(gestureZoom)
+                                panFilter.setTransform(gestureZoom, panX, panY)
 
                                 val width = size.width.toFloat().coerceAtLeast(1f)
                                 val height = size.height.toFloat().coerceAtLeast(1f)
-                                val maxPan = 0.5f * (1f - 1f / gestureZoom)
-                                panX = (panX - panChange.x / width).coerceIn(-maxPan, maxPan)
-                                panY = (panY + panChange.y / height).coerceIn(-maxPan, maxPan)
-                                panFilter.setPan(panX, panY)
+                                val panScale = 1f / gestureZoom
+                                val maxPan = 0.5f * (1f - panScale)
+                                panX = (panX - panChange.x / width * panScale).coerceIn(-maxPan, maxPan)
+                                panY = (panY + panChange.y / height * panScale).coerceIn(-maxPan, maxPan)
+                                panFilter.setTransform(gestureZoom, panX, panY)
                             }
                         }
                     }
@@ -587,8 +588,7 @@ private fun RootEncoderCameraPreview(
                                 gestureZoom = 1f
                                 panX = 0f
                                 panY = 0f
-                                source.setZoom(1f)
-                                panFilter.setPan(0f, 0f)
+                                panFilter.setTransform(1f, 0f, 0f)
                             }
                         )
                     }

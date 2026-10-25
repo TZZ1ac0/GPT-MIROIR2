@@ -2,6 +2,11 @@
 
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
+## [0.17.0] - 2026-10-25
+
+### Corrigé
+- RootEncoder : déplace zoom et panoramique dans le même filtre OpenGL ; le recadrage UV reste dans une fenêtre valide pour éviter les bandes striées aux bords.
+
 ## [0.16.0] - 2026-10-25
 
 ### Ajouté
