@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.6] - 2026-10-25
+
+### Corrigé
+- Supprime le callback de statistiques indisponible dans RootEncoder 2.7.2 afin de rétablir la compilation.
+
 ## [1.0.5] - 2026-10-25
 
 ### Corrigé
