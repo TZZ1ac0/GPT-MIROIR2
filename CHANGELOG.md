@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.4] - 2026-10-25
+
+### Corrigé
+- Évite de recréer l’aperçu RootEncoder lors du simple basculement RTSP et empêche les appels répétés à `startStream()` lorsque le flux est déjà actif.
+
 ## [1.0.3] - 2026-10-25
 
 ### Corrigé
