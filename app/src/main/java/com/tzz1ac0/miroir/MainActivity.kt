@@ -590,8 +590,8 @@ private fun RootEncoderCameraPreview(
     var gestureZoom by rememberSaveable { mutableStateOf(1f) }
     var panX by rememberSaveable { mutableStateOf(0f) }
     var panY by rememberSaveable { mutableStateOf(0f) }
-    val source = remember { AutoExposureCameraXSource(activity.applicationContext) }
-    val stream = remember {
+    val source = remember(rtspPort) { AutoExposureCameraXSource(activity.applicationContext) }
+    val stream = remember(rtspPort) {
         RtspServerStream(
             activity.applicationContext,
             rtspPort,
@@ -609,7 +609,7 @@ private fun RootEncoderCameraPreview(
         )
     }
     val panFilter = remember(stream) { PanFilterRender() }
-    DisposableEffect(stream, source, full, rtspEnabled, rtspPort) {
+    DisposableEffect(stream, source, full) {
         try {
             if (full) {
                 val largestResolution = source.getCameraResolutions(CameraHelper.Facing.FRONT)
@@ -623,7 +623,9 @@ private fun RootEncoderCameraPreview(
                 }
             })
             stream.getGlInterface().autoHandleOrientation = true
-            prepared = stream.prepareVideo(width = 640, height = 480, bitrate = 1_200_000, fps = 30)
+            val videoPrepared = stream.prepareVideo(width = 640, height = 480, bitrate = 1_200_000, fps = 30)
+            val audioPrepared = stream.prepareAudio(sampleRate = 44_100, isStereo = true, bitrate = 64_000)
+            prepared = videoPrepared && audioPrepared
             if (prepared) {
                 stream.getGlInterface().setFilter(panFilter)
                 panFilter.setTransform(gestureZoom, panX, panY)
@@ -634,9 +636,21 @@ private fun RootEncoderCameraPreview(
             Log.e("MiroirCamera", "Échec de préparation de RootEncoder", error)
         }
 
-        // Keep the local preview independent from RTSP server startup: a bind/start
-        // failure must not hide the camera image.
-        if (prepared && rtspEnabled) {
+        onDispose {
+            onRtspServerStateChanged(false)
+            if (stream.isStreaming) stream.stopStream()
+            if (stream.isOnPreview) stream.stopPreview()
+            stream.release()
+        }
+    }
+
+    // RTSP is controlled independently from the preview/encoder lifecycle. Toggling
+    // the option must not release the StreamBase instance and then try to reuse it.
+    LaunchedEffect(stream, prepared, rtspEnabled) {
+        if (!prepared || !rtspEnabled) {
+            if (stream.isStreaming) stream.stopStream()
+            onRtspServerStateChanged(false)
+        } else {
             try {
                 stream.startStream()
                 onRtspServerStateChanged(stream.isStreaming)
@@ -645,14 +659,6 @@ private fun RootEncoderCameraPreview(
                 onRtspServerStateChanged(false)
                 Log.e("MiroirCamera", "Échec de démarrage du serveur RTSP sur le port $rtspPort", error)
             }
-        } else {
-            onRtspServerStateChanged(false)
-        }
-        onDispose {
-            onRtspServerStateChanged(false)
-            if (stream.isStreaming) stream.stopStream()
-            if (stream.isOnPreview) stream.stopPreview()
-            stream.release()
         }
     }
 
