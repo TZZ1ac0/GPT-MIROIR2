@@ -122,7 +122,7 @@ private fun CameraScreen(activity: ComponentActivity) {
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
     var displayedImageResolution by remember { mutableStateOf("Indisponible") }
     var availableSurfaceResolution by remember { mutableStateOf("Indisponible") }
-    val nativeSensorResolution = remember { getNativeSensorResolution(activity) }
+    val nativeSensorResolution = remember(isFrontCamera) { getNativeSensorResolution(activity, isFrontCamera) }
     val permissionRequest = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted -> hasCameraPermission = granted }
@@ -804,13 +804,13 @@ private fun formatResolution(width: Int, height: Int): String {
     return "$width × $height px [${width / divisor}/${height / divisor}]"
 }
 
-private fun getNativeSensorResolution(activity: ComponentActivity): String {
+private fun getNativeSensorResolution(activity: ComponentActivity, isFrontCamera: Boolean): String {
     return try {
         val cameraManager = activity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         val frontCameraId = cameraManager.cameraIdList.firstOrNull { cameraId ->
             cameraManager.getCameraCharacteristics(cameraId)
-                .get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT
-        } ?: return "Indisponible (caméra avant introuvable)"
+                .get(CameraCharacteristics.LENS_FACING) == if (isFrontCamera) CameraCharacteristics.LENS_FACING_FRONT else CameraCharacteristics.LENS_FACING_BACK
+        } ?: return "Indisponible (caméra ${if (isFrontCamera) "avant" else "arrière"} introuvable)"
         val size = cameraManager.getCameraCharacteristics(frontCameraId)
             .get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE)
             ?: return "Indisponible"
