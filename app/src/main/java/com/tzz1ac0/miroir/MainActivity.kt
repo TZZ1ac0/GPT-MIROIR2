@@ -150,6 +150,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                                 " · no RTSP"
                             }
                         )
+                        Text(text = if (isFrontCamera) " (avant)" else " (arrière)")
                     }
                 },
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
