@@ -184,12 +184,19 @@ class AutoExposureCameraXSource(
   override fun isRunning() = camera != null
 
   fun switchCamera() {
-    surfaceTexture?.let {
-      stop()
-      facing = if (facing == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
-      cameraSelectorBuilder = CameraSelector.Builder()
-      start(it)
-    }
+    setCameraFacing(facing != CameraSelector.LENS_FACING_FRONT)
+  }
+
+  /** Change the active lens while retaining the RootEncoder stream instance. */
+  fun setCameraFacing(front: Boolean) {
+    val targetFacing = if (front) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
+    if (facing == targetFacing) return
+
+    val currentSurfaceTexture = surfaceTexture
+    if (currentSurfaceTexture != null) stop()
+    facing = targetFacing
+    cameraSelectorBuilder = CameraSelector.Builder()
+    if (currentSurfaceTexture != null) start(currentSurfaceTexture)
   }
 
     @OptIn(ExperimentalCamera2Interop::class)
