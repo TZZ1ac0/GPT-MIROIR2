@@ -134,23 +134,25 @@ private fun CameraScreen(activity: ComponentActivity) {
             TopAppBar(
                 modifier = Modifier.height(48.dp),
                 title = {
-                    Text(
-                        modifier = Modifier.fillMaxHeight().wrapContentHeight(Alignment.CenterVertically),
-                        text = buildAnnotatedString {
-                            append("Miroir — ")
-                            withStyle(
-                                SpanStyle(
-                                    fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                                    fontStyle = FontStyle.Italic
-                                )
-                            ) {
-                                append(cameraMode.title)
+                    Row(
+                        modifier = Modifier.fillMaxHeight(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Miroir — ")
+                        Text(
+                            text = cameraMode.title,
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontStyle = FontStyle.Italic
+                            )
+                        )
+                        Text(
+                            text = if (cameraMode == CameraMode.ROOT_ENCODER && rtspServerRunning) {
+                                " · RTSP"
+                            } else {
+                                " · no RTSP"
                             }
-                            if (cameraMode == CameraMode.ROOT_ENCODER && rtspServerRunning) {
-                                append(" · RTSP")
-                            }
-                        }
-                    )
+                        )
+                    }
                 },
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
