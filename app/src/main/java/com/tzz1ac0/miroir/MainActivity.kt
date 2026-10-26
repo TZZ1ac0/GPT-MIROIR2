@@ -273,22 +273,46 @@ private fun CameraScreen(activity: ComponentActivity) {
                         Tab(
                             selected = selectedSettingsTab == 0,
                             onClick = { selectedSettingsTab = 0 },
-                            text = { Text("Flux") }
+                            text = {
+                                Text(
+                                    "Flux",
+                                    color = if (selectedSettingsTab == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (selectedSettingsTab == 0) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
+                            }
                         )
                         Tab(
                             selected = selectedSettingsTab == 1,
                             onClick = { selectedSettingsTab = 1 },
-                            text = { Text("CameraX") }
+                            text = {
+                                Text(
+                                    "CameraX",
+                                    color = if (selectedSettingsTab == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (selectedSettingsTab == 1) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
+                            }
                         )
                         Tab(
                             selected = selectedSettingsTab == 2,
                             onClick = { selectedSettingsTab = 2 },
-                            text = { Text("RootEncoder") }
+                            text = {
+                                Text(
+                                    "RootEncoder",
+                                    color = if (selectedSettingsTab == 2) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (selectedSettingsTab == 2) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
+                            }
                         )
                         Tab(
                             selected = selectedSettingsTab == 3,
                             onClick = { selectedSettingsTab = 3 },
-                            text = { Text("RTSP") }
+                            text = {
+                                Text(
+                                    "RTSP",
+                                    color = if (selectedSettingsTab == 3) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (selectedSettingsTab == 3) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
+                            }
                         )
                     }
                     when (selectedSettingsTab) {
