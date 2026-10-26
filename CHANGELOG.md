@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.7] - 2026-10-26
+
+### Modifié
+- Centre verticalement les trois éléments de la barre de titre et affiche « no RTSP » lorsque le serveur RTSP n’est pas actif.
+
 ## [1.0.6] - 2026-10-25
 
 ### Corrigé
