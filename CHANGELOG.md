@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2026-10-26
+
+### Ajouté
+- Ajoute au menu une commande « Arrière » / « Avant » pour basculer entre les caméras avant et arrière dans CameraX et RootEncoder.
+- Affiche à la fin de la ligne de titre « (avant) » ou « (arrière) » selon la caméra actuellement sélectionnée, avec mise à jour lors du basculement.
+- Réduit la taille de la police du statut « RTSP » / « no RTSP » pour qu’il occupe moins de place dans la barre de titre.
+- Met en évidence l’onglet actif des paramètres par un fond de couleur principale et un libellé de couleur contrastante ; les onglets inactifs gardent un fond secondaire.
+- Conserve l’instance RootEncoder pendant le changement de caméra ; les tests sur appareil confirment que la continuité de la session RTSP est assurée.
+
+
 ## [1.0.7] - 2026-10-26
 
 ### Modifié
@@ -134,7 +144,7 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ## [0.4.0] - 2026-10-23
 
 ### Modifié
-- Interface : déplace le choix entre CameraX et RootEncoder dans le menu ; le mode actif est grisé et CameraX est sélectionné par défaut au démarrage.
+- Paramètres : déplace le choix entre CameraX et RootEncoder dans le menu ; le mode actif est grisé et CameraX est sélectionné par défaut au démarrage.
 
 ## [0.3.0] - 2026-10-23
 

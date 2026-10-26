@@ -19,6 +19,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -109,6 +110,7 @@ private fun CameraScreen(activity: ComponentActivity) {
         )
     }
     var cameraMode by rememberSaveable { mutableStateOf(CameraMode.DEFAULT) }
+    var isFrontCamera by rememberSaveable { mutableStateOf(true) }
     var menuExpanded by remember { mutableStateOf(false) }
     var settingsDialogVisible by remember { mutableStateOf(false) }
     var selectedSettingsTab by rememberSaveable { mutableStateOf(0) }
@@ -121,7 +123,7 @@ private fun CameraScreen(activity: ComponentActivity) {
     var videoStreamResolution by remember { mutableStateOf("Indisponible") }
     var displayedImageResolution by remember { mutableStateOf("Indisponible") }
     var availableSurfaceResolution by remember { mutableStateOf("Indisponible") }
-    val nativeSensorResolution = remember { getNativeSensorResolution(activity) }
+    val nativeSensorResolution = remember(isFrontCamera) { getNativeSensorResolution(activity, isFrontCamera) }
     val permissionRequest = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted -> hasCameraPermission = granted }
@@ -147,8 +149,10 @@ private fun CameraScreen(activity: ComponentActivity) {
                                 " · RTSP"
                             } else {
                                 " · no RTSP"
-                            }
+                            },
+                            style = MaterialTheme.typography.labelSmall
                         )
+                        Text(text = if (isFrontCamera) " (avant)" else " (arrière)")
                     }
                 },
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
@@ -164,6 +168,13 @@ private fun CameraScreen(activity: ComponentActivity) {
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false }
                     ) {
+                        DropdownMenuItem(
+                            text = { Text(if (isFrontCamera) "Arrière" else "Avant") },
+                            onClick = {
+                                isFrontCamera = !isFrontCamera
+                                menuExpanded = false
+                            }
+                        )
                         DropdownMenuItem(
                             text = { Text("CameraX") },
                             enabled = CameraMode.CAMERAX.isSelectableWhen(cameraMode),
@@ -209,6 +220,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                         RootEncoderCameraPreview(
                             activity = activity,
                             full = fullRootEncoder,
+                            isFrontCamera = isFrontCamera,
                             rtspEnabled = rtspEnabled && rtspPort != null,
                             rtspPort = rtspPort ?: 8554,
                             modifier = Modifier.weight(1f),
@@ -222,6 +234,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                     CameraXCameraPreview(
                         activity = activity,
                         full = fullCameraX,
+                        isFrontCamera = isFrontCamera,
                         modifier = Modifier.weight(1f),
                         onStreamResolutionChanged = { videoStreamResolution = it },
                         onDisplayedResolutionChanged = { displayedImageResolution = it },
@@ -259,24 +272,64 @@ private fun CameraScreen(activity: ComponentActivity) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     TabRow(selectedTabIndex = selectedSettingsTab) {
                         Tab(
+                            modifier = Modifier.background(
+                                if (selectedSettingsTab == 0) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            ),
                             selected = selectedSettingsTab == 0,
                             onClick = { selectedSettingsTab = 0 },
-                            text = { Text("Flux") }
+                            text = {
+                                Text(
+                                    "Flux",
+                                    color = if (selectedSettingsTab == 0) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (selectedSettingsTab == 0) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
+                            }
                         )
                         Tab(
+                            modifier = Modifier.background(
+                                if (selectedSettingsTab == 1) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            ),
                             selected = selectedSettingsTab == 1,
                             onClick = { selectedSettingsTab = 1 },
-                            text = { Text("CameraX") }
+                            text = {
+                                Text(
+                                    "CameraX",
+                                    color = if (selectedSettingsTab == 1) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (selectedSettingsTab == 1) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
+                            }
                         )
                         Tab(
+                            modifier = Modifier.background(
+                                if (selectedSettingsTab == 2) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            ),
                             selected = selectedSettingsTab == 2,
                             onClick = { selectedSettingsTab = 2 },
-                            text = { Text("RootEncoder") }
+                            text = {
+                                Text(
+                                    "RootEncoder",
+                                    color = if (selectedSettingsTab == 2) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (selectedSettingsTab == 2) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
+                            }
                         )
                         Tab(
+                            modifier = Modifier.background(
+                                if (selectedSettingsTab == 3) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            ),
                             selected = selectedSettingsTab == 3,
                             onClick = { selectedSettingsTab = 3 },
-                            text = { Text("RTSP") }
+                            text = {
+                                Text(
+                                    "RTSP",
+                                    color = if (selectedSettingsTab == 3) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (selectedSettingsTab == 3) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
+                            }
                         )
                     }
                     when (selectedSettingsTab) {
@@ -290,7 +343,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                             HorizontalDivider()
                             SettingsRow(
                                 label = "Source de la résolution native",
-                                value = "Camera2 — SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)"
+                                value = "Camera2 — SENSOR_INFO_PIXEL_ARRAY_SIZE (${if (isFrontCamera) "caméra avant" else "caméra arrière"})"
                             )
                             HorizontalDivider()
                             SettingsRow(
@@ -432,6 +485,7 @@ private fun CameraScreen(activity: ComponentActivity) {
 private fun CameraXCameraPreview(
     activity: ComponentActivity,
     full: Boolean,
+    isFrontCamera: Boolean,
     modifier: Modifier = Modifier,
     onStreamResolutionChanged: (String) -> Unit,
     onDisplayedResolutionChanged: (String) -> Unit,
@@ -528,7 +582,7 @@ private fun CameraXCameraPreview(
         )
     }
 
-    DisposableEffect(activity, previewView) {
+    DisposableEffect(activity, previewView, isFrontCamera) {
         val providerFuture = ProcessCameraProvider.getInstance(activity)
         var provider: ProcessCameraProvider? = null
         var disposed = false
@@ -552,7 +606,10 @@ private fun CameraXCameraPreview(
                 analysis.setAnalyzer(analysisExecutor) { image -> image.close() }
                 provider?.unbindAll()
                 boundCamera = provider?.bindToLifecycle(
-                    activity, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis
+                    activity,
+                    if (isFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview,
+                    analysis
                 )
                 preview.resolutionInfo?.resolution?.let { resolution ->
                     onStreamResolutionChanged(formatResolution(resolution.width, resolution.height))
@@ -575,6 +632,7 @@ private fun CameraXCameraPreview(
 private fun RootEncoderCameraPreview(
     activity: ComponentActivity,
     full: Boolean,
+    isFrontCamera: Boolean,
     rtspEnabled: Boolean,
     rtspPort: Int,
     modifier: Modifier = Modifier,
@@ -607,10 +665,22 @@ private fun RootEncoderCameraPreview(
         )
     }
     val panFilter = remember(stream) { PanFilterRender() }
+    LaunchedEffect(source, isFrontCamera, full) {
+        val facing = if (isFrontCamera) CameraHelper.Facing.FRONT else CameraHelper.Facing.BACK
+        if (full) {
+            val largestResolution = source.getCameraResolutions(facing)
+                .maxByOrNull { it.width.toLong() * it.height.toLong() }
+            source.setRequiredResolution(largestResolution)
+        } else {
+            source.setRequiredResolution(null)
+        }
+        source.setCameraFacing(isFrontCamera)
+    }
     DisposableEffect(stream, source, full) {
         try {
             if (full) {
-                val largestResolution = source.getCameraResolutions(CameraHelper.Facing.FRONT)
+                val facing = if (isFrontCamera) CameraHelper.Facing.FRONT else CameraHelper.Facing.BACK
+                val largestResolution = source.getCameraResolutions(facing)
                     .maxByOrNull { it.width.toLong() * it.height.toLong() }
                 source.setRequiredResolution(largestResolution)
             } else {
@@ -674,7 +744,8 @@ private fun RootEncoderCameraPreview(
                 contentAlignment = Alignment.Center
             ) {
                 val targetAspectRatio = if (full) {
-                    val resolution = source.getCameraResolutions(CameraHelper.Facing.FRONT)
+                    val facing = if (isFrontCamera) CameraHelper.Facing.FRONT else CameraHelper.Facing.BACK
+                    val resolution = source.getCameraResolutions(facing)
                         .maxByOrNull { it.width.toLong() * it.height.toLong() }
                     if (resolution != null && resolution.height > 0) {
                         resolution.width.toFloat() / resolution.height.toFloat()
@@ -776,13 +847,13 @@ private fun formatResolution(width: Int, height: Int): String {
     return "$width × $height px [${width / divisor}/${height / divisor}]"
 }
 
-private fun getNativeSensorResolution(activity: ComponentActivity): String {
+private fun getNativeSensorResolution(activity: ComponentActivity, isFrontCamera: Boolean): String {
     return try {
         val cameraManager = activity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         val frontCameraId = cameraManager.cameraIdList.firstOrNull { cameraId ->
             cameraManager.getCameraCharacteristics(cameraId)
-                .get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT
-        } ?: return "Indisponible (caméra avant introuvable)"
+                .get(CameraCharacteristics.LENS_FACING) == if (isFrontCamera) CameraCharacteristics.LENS_FACING_FRONT else CameraCharacteristics.LENS_FACING_BACK
+        } ?: return "Indisponible (caméra ${if (isFrontCamera) "avant" else "arrière"} introuvable)"
         val size = cameraManager.getCameraCharacteristics(frontCameraId)
             .get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE)
             ?: return "Indisponible"
