@@ -1,10 +1,10 @@
 # Changelog
 
-## [1.0.8] - 2026-10-26
+## [1.1.0] - 2026-10-26
 
 ### Ajouté
 - Ajoute au menu une commande « Arrière » / « Avant » pour basculer entre les caméras avant et arrière dans CameraX et RootEncoder.
-- Conserve l’instance RootEncoder pendant le changement de caméra afin de tenter de maintenir la session RTSP des clients connectée pendant la transition.
+- Conserve l’instance RootEncoder pendant le changement de caméra ; les tests sur appareil confirment que la continuité de la session RTSP est assurée.
 
 
 ## [1.0.7] - 2026-10-26
@@ -141,7 +141,7 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ## [0.4.0] - 2026-10-23
 
 ### Modifié
-- Interface : déplace le choix entre CameraX et RootEncoder dans le menu ; le mode actif est grisé et CameraX est sélectionné par défaut au démarrage.
+- Paramètres : déplace le choix entre CameraX et RootEncoder dans le menu ; le mode actif est grisé et CameraX est sélectionné par défaut au démarrage.
 
 ## [0.3.0] - 2026-10-23
 
