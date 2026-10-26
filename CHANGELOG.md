@@ -5,6 +5,7 @@
 ### Ajouté
 - Ajoute au menu une commande « Arrière » / « Avant » pour basculer entre les caméras avant et arrière dans CameraX et RootEncoder.
 - Affiche à la fin de la ligne de titre « (avant) » ou « (arrière) » selon la caméra actuellement sélectionnée, avec mise à jour lors du basculement.
+- Réduit la taille de la police du statut « RTSP » / « no RTSP » pour qu’il occupe moins de place dans la barre de titre.
 - Conserve l’instance RootEncoder pendant le changement de caméra ; les tests sur appareil confirment que la continuité de la session RTSP est assurée.
 
 
