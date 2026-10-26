@@ -109,6 +109,7 @@ private fun CameraScreen(activity: ComponentActivity) {
         )
     }
     var cameraMode by rememberSaveable { mutableStateOf(CameraMode.DEFAULT) }
+    var isFrontCamera by rememberSaveable { mutableStateOf(true) }
     var menuExpanded by remember { mutableStateOf(false) }
     var settingsDialogVisible by remember { mutableStateOf(false) }
     var selectedSettingsTab by rememberSaveable { mutableStateOf(0) }
@@ -165,6 +166,13 @@ private fun CameraScreen(activity: ComponentActivity) {
                         onDismissRequest = { menuExpanded = false }
                     ) {
                         DropdownMenuItem(
+                            text = { Text(if (isFrontCamera) "Arrière" else "Avant") },
+                            onClick = {
+                                isFrontCamera = !isFrontCamera
+                                menuExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
                             text = { Text("CameraX") },
                             enabled = CameraMode.CAMERAX.isSelectableWhen(cameraMode),
                             onClick = {
@@ -209,6 +217,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                         RootEncoderCameraPreview(
                             activity = activity,
                             full = fullRootEncoder,
+                            isFrontCamera = isFrontCamera,
                             rtspEnabled = rtspEnabled && rtspPort != null,
                             rtspPort = rtspPort ?: 8554,
                             modifier = Modifier.weight(1f),
@@ -222,6 +231,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                     CameraXCameraPreview(
                         activity = activity,
                         full = fullCameraX,
+                        isFrontCamera = isFrontCamera,
                         modifier = Modifier.weight(1f),
                         onStreamResolutionChanged = { videoStreamResolution = it },
                         onDisplayedResolutionChanged = { displayedImageResolution = it },
@@ -290,7 +300,7 @@ private fun CameraScreen(activity: ComponentActivity) {
                             HorizontalDivider()
                             SettingsRow(
                                 label = "Source de la résolution native",
-                                value = "Camera2 — SENSOR_INFO_PIXEL_ARRAY_SIZE (caméra avant)"
+                                value = "Camera2 — SENSOR_INFO_PIXEL_ARRAY_SIZE (${if (isFrontCamera) "caméra avant" else "caméra arrière"})"
                             )
                             HorizontalDivider()
                             SettingsRow(
@@ -432,6 +442,7 @@ private fun CameraScreen(activity: ComponentActivity) {
 private fun CameraXCameraPreview(
     activity: ComponentActivity,
     full: Boolean,
+    isFrontCamera: Boolean,
     modifier: Modifier = Modifier,
     onStreamResolutionChanged: (String) -> Unit,
     onDisplayedResolutionChanged: (String) -> Unit,
@@ -528,7 +539,7 @@ private fun CameraXCameraPreview(
         )
     }
 
-    DisposableEffect(activity, previewView) {
+    DisposableEffect(activity, previewView, isFrontCamera) {
         val providerFuture = ProcessCameraProvider.getInstance(activity)
         var provider: ProcessCameraProvider? = null
         var disposed = false
@@ -552,7 +563,10 @@ private fun CameraXCameraPreview(
                 analysis.setAnalyzer(analysisExecutor) { image -> image.close() }
                 provider?.unbindAll()
                 boundCamera = provider?.bindToLifecycle(
-                    activity, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis
+                    activity,
+                    if (isFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview,
+                    analysis
                 )
                 preview.resolutionInfo?.resolution?.let { resolution ->
                     onStreamResolutionChanged(formatResolution(resolution.width, resolution.height))
@@ -575,6 +589,7 @@ private fun CameraXCameraPreview(
 private fun RootEncoderCameraPreview(
     activity: ComponentActivity,
     full: Boolean,
+    isFrontCamera: Boolean,
     rtspEnabled: Boolean,
     rtspPort: Int,
     modifier: Modifier = Modifier,
@@ -607,10 +622,22 @@ private fun RootEncoderCameraPreview(
         )
     }
     val panFilter = remember(stream) { PanFilterRender() }
+    LaunchedEffect(source, isFrontCamera, full) {
+        val facing = if (isFrontCamera) CameraHelper.Facing.FRONT else CameraHelper.Facing.BACK
+        if (full) {
+            val largestResolution = source.getCameraResolutions(facing)
+                .maxByOrNull { it.width.toLong() * it.height.toLong() }
+            source.setRequiredResolution(largestResolution)
+        } else {
+            source.setRequiredResolution(null)
+        }
+        source.setCameraFacing(isFrontCamera)
+    }
     DisposableEffect(stream, source, full) {
         try {
             if (full) {
-                val largestResolution = source.getCameraResolutions(CameraHelper.Facing.FRONT)
+                val facing = if (isFrontCamera) CameraHelper.Facing.FRONT else CameraHelper.Facing.BACK
+                val largestResolution = source.getCameraResolutions(facing)
                     .maxByOrNull { it.width.toLong() * it.height.toLong() }
                 source.setRequiredResolution(largestResolution)
             } else {
@@ -674,7 +701,8 @@ private fun RootEncoderCameraPreview(
                 contentAlignment = Alignment.Center
             ) {
                 val targetAspectRatio = if (full) {
-                    val resolution = source.getCameraResolutions(CameraHelper.Facing.FRONT)
+                    val facing = if (isFrontCamera) CameraHelper.Facing.FRONT else CameraHelper.Facing.BACK
+                    val resolution = source.getCameraResolutions(facing)
                         .maxByOrNull { it.width.toLong() * it.height.toLong() }
                     if (resolution != null && resolution.height > 0) {
                         resolution.width.toFloat() / resolution.height.toFloat()
