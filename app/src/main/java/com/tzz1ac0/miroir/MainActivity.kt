@@ -148,7 +148,8 @@ private fun CameraScreen(activity: ComponentActivity) {
                                 " · RTSP"
                             } else {
                                 " · no RTSP"
-                            }
+                            },
+                            style = MaterialTheme.typography.labelSmall
                         )
                         Text(text = if (isFrontCamera) " (avant)" else " (arrière)")
                     }
