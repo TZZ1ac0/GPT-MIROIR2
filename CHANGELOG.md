@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.8] - 2026-10-26
+
+### Ajouté
+- Ajoute au menu une commande « Arrière » / « Avant » pour basculer entre les caméras avant et arrière dans CameraX et RootEncoder.
+- Conserve l’instance RootEncoder pendant le changement de caméra afin de tenter de maintenir la session RTSP des clients connectée pendant la transition.
+
+
 ## [1.0.7] - 2026-10-26
 
 ### Modifié
