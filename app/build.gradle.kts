@@ -51,10 +51,10 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 
     val cameraXVersion = "1.4.2"
-    val rootEncoderVersion = "2.8.1"
+    val rootEncoderVersion = "2.7.2"
     implementation("com.github.pedroSG94.RootEncoder:library:$rootEncoderVersion")
     implementation("com.github.pedroSG94.RootEncoder:extra-sources:$rootEncoderVersion")
-    // RTSP-Server 1.4.1 is the latest verified version compatible with compileSdk 36.
+    // Keep RootEncoder aligned with RTSP-Server 1.4.1 (built against RootEncoder 2.7.2).
     implementation("com.github.pedroSG94:RTSP-Server:1.4.1")
     implementation("com.google.guava:guava:33.3.1-android")
     implementation("androidx.camera:camera-camera2:$cameraXVersion")

@@ -1,5 +1,41 @@
 # Changelog
 
+## [1.0.6] - 2026-10-25
+
+### Corrigé
+- Supprime le callback de statistiques indisponible dans RootEncoder 2.7.2 afin de rétablir la compilation.
+
+## [1.0.5] - 2026-10-25
+
+### Corrigé
+- Aligne RootEncoder sur la version 2.7.2 utilisée par RTSP-Server 1.4.1 afin d’éviter le `NoSuchMethodError` lors de la connexion d’un client RTSP.
+
+## [1.0.4] - 2026-10-25
+
+### Corrigé
+- Évite de recréer l’aperçu RootEncoder lors du simple basculement RTSP et empêche les appels répétés à `startStream()` lorsque le flux est déjà actif.
+
+## [1.0.3] - 2026-10-25
+
+### Corrigé
+- Prépare explicitement l’encodeur audio sans source audio afin d’éviter l’échec `AudioEncoder not prepared yet` au démarrage RTSP.
+- Sépare l’activation RTSP du cycle de vie de l’aperçu pour éviter de libérer puis réutiliser la même instance RootEncoder lors du changement de l’option.
+
+## [1.0.2] - 2026-10-25
+
+### Corrigé
+- Maintient l’aperçu local RootEncoder disponible si le démarrage du serveur RTSP échoue, journalise les erreurs de démarrage et synchronise la surface d’aperçu avec le rendu GL.
+
+## [1.0.1] - 2026-10-25
+
+### Corrigé
+- Remplace RTSP-Server 1.4.2 par 1.4.1, car la version 1.4.2 exige compileSdk 37 alors que le projet utilise compileSdk 36 ; conserve ainsi la compatibilité avec la configuration Android actuelle.
+
+## [1.0.0] - 2026-10-25
+
+### Ajouté
+- Ajoute un serveur RTSP facultatif en mode RootEncoder, avec port configurable, commande VLC indicative et état visible dans la barre de titre lorsque le serveur démarre.
+
 Les changements notables du projet sont documentés ici. Le format suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnement [SemVer](https://semver.org/lang/fr/).
 
 ## [0.21.0] - 2026-10-25
@@ -53,7 +89,7 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ### Ajouté
 - CameraX : ajoute le zoom par pincement à deux doigts lorsque l’option « Full » est activée, avec respect des limites de zoom de la caméra ; un double tap réinitialise le zoom à 1×.
 
-## [0.11.0] - 2026-10-24
+## [0.11.0] - 2026-10-25
 
 ### Ajouté
 - RootEncoder : ajoute l’option « Full » pour demander la résolution caméra disponible la plus élevée et afficher l’aperçu sans déformation, tout en conservant le cadrage initial lorsque l’option est désactivée.
@@ -95,12 +131,11 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ### Modifié
 - Interface : déplace le choix entre CameraX et RootEncoder dans le menu ; le mode actif est grisé et CameraX est sélectionné par défaut au démarrage.
 
-
 ## [0.3.0] - 2026-10-23
 
 ### Modifié
 - Paramètres : précise l’origine logicielle des résolutions, distingue la taille de l’image affichée de l’espace disponible pour l’aperçu, et affiche la résolution de cet espace.
-- Paramètres : affiche aussi la résolution native du capteur avant, lue via Camera2 (`SENSOR_INFO_PIXEL_ARRAY_SIZE`).
+- Paramètres : affiche aussi la résolution native du capteur avant, lue via Camera2 (SENSOR_INFO_PIXEL_ARRAY_SIZE).
 - Paramètres : présente les informations sous forme de tableau à deux colonnes, avec les rapports d’image entre crochets et un défilement si nécessaire.
 - Barre supérieure : indique le mode actif (CameraX ou RootEncoder) en italique et actualise le titre lors du changement de mode.
 
@@ -120,7 +155,7 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ## [0.2.1] - 2026-10-22
 
 ### Modifié
-- Logcat : suppression de tous les appels de journalisation de l’application, y compris les messages `MiroirCameraDiag`.
+- Logcat : suppression de tous les appels de journalisation de l’application, y compris les messages MiroirCameraDiag.
 - Barre supérieure : titre « Miroir » et menu à trois points verticaux avec l’action « Quitter ».
 
 ## [0.2.0] - 2026-10-14
@@ -135,4 +170,3 @@ Les changements notables du projet sont documentés ici. Le format suit les prin
 ### Ajouté
 - Fondation Android Kotlin / Jetpack Compose.
 - Écran « Hello World! » et tests unitaires.
-- CI GitHub Actions, badges, documentation et automatisation des releases.
